@@ -36,7 +36,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 /* KPI */
 .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
-@media(min-width:700px){.kpi-grid{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:600px){.kpi-grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:900px){.kpi-grid{grid-template-columns:repeat(4,1fr)}}
 .kpi{background:#fff;border-radius:10px;padding:12px 14px;border:1px solid #e5e7eb}
 .kpi-label{font-size:11px;color:#6b7280;margin-bottom:4px}
 .kpi-val{font-size:20px;font-weight:600;color:#1a1a2e}
@@ -409,20 +410,73 @@ function renderDash(){
   const val=products.reduce((a,p)=>a+p.stock*p.costo,0);
   const sin=products.filter(p=>p.stock===0).length;
   const baj=products.filter(p=>p.stock>0&&p.stock<=p.min).length;
-  const pedPend=pedidos.filter(p=>p.status==='Pendiente'||p.status==='Cotizado').length;
+
+  const pedTotal=pedidos.length;
+  const pedCobrados=pedidos.filter(p=>p.status==='Cobrado'||p.status==='Instalado');
+  const pedActivos=pedidos.filter(p=>p.status==='Pendiente'||p.status==='Cotizado'||p.status==='Confirmado').length;
+  const ventasTot=pedCobrados.reduce((a,p)=>a+pedidoTotal(p.items||[]),0);
+  const gananciaTot=pedCobrados.reduce((a,p)=>{
+    return a+(p.items||[]).reduce((s,i)=>{
+      const prod=products.find(x=>x.id===i.prodId);
+      const costo=prod?prod.costo:0;
+      return s+(i.precio-costo)*i.qty;
+    },0);
+  },0);
+  const margenProm=ventasTot>0?Math.round(gananciaTot/ventasTot*100):0;
   const pedMes=pedidos.filter(p=>{const d=p.fecha?.toDate?p.fecha.toDate():new Date(p.fecha||0);const n=new Date();return d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();}).length;
+
   document.getElementById('kpi-grid').innerHTML=`
+    <div class="kpi"><div class="kpi-label">Pedidos totales</div><div class="kpi-val">${pedTotal}</div></div>
+    <div class="kpi"><div class="kpi-label">Instalados / Cobrados</div><div class="kpi-val green">${pedCobrados.length}</div></div>
+    <div class="kpi"><div class="kpi-label">Pedidos activos</div><div class="kpi-val blue">${pedActivos}</div><div class="kpi-sub">pendiente/cotizado/confirmado</div></div>
+    <div class="kpi"><div class="kpi-label">Pedidos este mes</div><div class="kpi-val">${pedMes}</div></div>
+    <div class="kpi"><div class="kpi-label">Ventas totales</div><div class="kpi-val green" style="font-size:17px">${fmt(ventasTot)}</div><div class="kpi-sub">pedidos cobrados/instalados</div></div>
+    <div class="kpi"><div class="kpi-label">Ganancia total</div><div class="kpi-val green" style="font-size:17px">${fmt(gananciaTot)}</div></div>
+    <div class="kpi"><div class="kpi-label">Margen promedio</div><div class="kpi-val ${margenProm>=40?'green':margenProm>=20?'':'red'}" style="${margenProm>=20&&margenProm<40?'color:#92400e':''}">${margenProm}%</div></div>
+    <div class="kpi"><div class="kpi-label">Alertas stock</div><div class="kpi-val red">${sin+baj}</div><div class="kpi-sub">${sin} agotado · ${baj} bajo mínimo</div></div>
     <div class="kpi"><div class="kpi-label">Productos</div><div class="kpi-val">${products.length}</div></div>
-    <div class="kpi"><div class="kpi-label">En stock</div><div class="kpi-val blue">${tot}</div></div>
+    <div class="kpi"><div class="kpi-label">Unidades en stock</div><div class="kpi-val blue">${tot}</div></div>
     <div class="kpi"><div class="kpi-label">Valor inventario</div><div class="kpi-val" style="font-size:15px">${fmt(val)}</div><div class="kpi-sub">a precio costo</div></div>
-    <div class="kpi"><div class="kpi-label">Alertas stock</div><div class="kpi-val red">${sin+baj}</div><div class="kpi-sub">${sin} agotado · ${baj} bajo</div></div>
-    <div class="kpi"><div class="kpi-label">Pedidos activos</div><div class="kpi-val blue">${pedPend}</div><div class="kpi-sub">pendiente/cotizado</div></div>
-    <div class="kpi"><div class="kpi-label">Pedidos este mes</div><div class="kpi-val green">${pedMes}</div></div>
   `;
+
   const al=products.filter(p=>p.stock<=p.min);
   document.getElementById('dash-alerts').innerHTML=al.length?`<div class="alert-box"><h3>⚠ Stock bajo o agotado</h3>${al.map(p=>`<div class="alert-item"><span>${p.nombre}</span><span class="alert-badge">${p.stock===0?'Agotado':p.stock+' uds'}</span></div>`).join('')}</div>`:'';
-  const bc={};products.forEach(p=>{if(!bc[p.cat])bc[p.cat]={count:0,stock:0};bc[p.cat].count++;bc[p.cat].stock+=p.stock;});
-  document.getElementById('cat-grid').innerHTML=Object.entries(bc).map(([cat,d])=>`<div class="cat-card" onclick="filterByCat('${cat}')"><div class="cat-icon">${CATS[cat]||'📦'}</div><div class="cat-name">${cat}</div><div class="cat-count">${d.count} productos</div><div class="cat-stock">${d.stock} uds</div></div>`).join('');
+
+  // GRÁFICA DE BARRAS POR MES
+  const mesesData={};
+  pedidos.forEach(p=>{
+    const d=p.fecha?.toDate?p.fecha.toDate():new Date(p.fecha||0);
+    if(!d||isNaN(d))return;
+    const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const label=d.toLocaleDateString('es-MX',{month:'short',year:'2-digit'});
+    if(!mesesData[key])mesesData[key]={label,ventas:0,pedidos:0};
+    mesesData[key].pedidos++;
+    if(p.status==='Cobrado'||p.status==='Instalado') mesesData[key].ventas+=pedidoTotal(p.items||[]);
+  });
+  const meses=Object.entries(mesesData).sort((a,b)=>a[0].localeCompare(b[0])).slice(-6);
+  const maxVenta=Math.max(...meses.map(([,d])=>d.ventas),1);
+
+  const bcats={};products.forEach(p=>{if(!bcats[p.cat])bcats[p.cat]={count:0,stock:0};bcats[p.cat].count++;bcats[p.cat].stock+=p.stock;});
+
+  document.getElementById('cat-grid').innerHTML=`
+    ${meses.length?`
+    <div style="grid-column:1/-1;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px 18px;margin-bottom:4px">
+      <div style="font-size:13px;font-weight:600;color:#1a1a2e;margin-bottom:14px">Ventas por mes (instalados + cobrados)</div>
+      <div style="display:flex;align-items:flex-end;gap:10px;height:140px;padding-bottom:28px;position:relative">
+        ${meses.map(([,d])=>{
+          const h=d.ventas>0?Math.max(Math.round(d.ventas/maxVenta*110),4):2;
+          return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end">
+            ${d.ventas>0?`<div style="font-size:9px;font-weight:600;color:#E8293A;white-space:nowrap">${fmt(d.ventas)}</div>`:''}
+            <div style="width:100%;background:${d.ventas>0?'#E8293A':'#e5e7eb'};border-radius:4px 4px 0 0;height:${h}px;transition:height .3s"></div>
+            <div style="font-size:10px;color:#6b7280;text-align:center;position:absolute;bottom:0">${d.label}</div>
+            <div style="font-size:9px;color:#9ca3af;position:absolute;bottom:12px">${d.pedidos} ped.</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`:''}
+    <div style="grid-column:1/-1;font-size:13px;font-weight:600;color:#1a1a2e;margin-top:4px;margin-bottom:6px">Stock por categoría</div>
+    ${Object.entries(bcats).map(([cat,d])=>`<div class="cat-card" onclick="filterByCat('${cat}')"><div class="cat-icon">${CATS[cat]||'📦'}</div><div class="cat-name">${cat}</div><div class="cat-count">${d.count} productos</div><div class="cat-stock">${d.stock} uds</div></div>`).join('')}
+  `;
 }
 
 /* ===== PEDIDOS ===== */
