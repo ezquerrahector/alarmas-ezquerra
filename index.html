@@ -3,21 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Alarmas Ezquerra — Inventario</title>
+<title>Alarmas Ezquerra — Sistema</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="favicon.ico">
 <meta name="theme-color" content="#E8293A">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="apple-mobile-web-app-title" content="AE Inventario">
+<meta name="apple-mobile-web-app-title" content="AE Sistema">
 <link rel="apple-touch-icon" href="icons/icon-152x152.png">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f5f7;color:#1a1a2e;min-height:100vh}
+
+/* HEADER */
 .header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#000;border-bottom:2px solid #E8293A;flex-wrap:wrap;gap:8px;position:sticky;top:0;z-index:50}
-.logo img{height:32px;object-fit:contain}
-.tabs{display:flex;gap:3px;background:rgba(255,255,255,.1);padding:3px;border-radius:8px}
-.tab{padding:6px 11px;border-radius:6px;border:none;background:transparent;cursor:pointer;font-size:12px;color:rgba(255,255,255,.6);font-family:inherit;font-weight:500;transition:all .15s}
+.logo img{height:30px;object-fit:contain}
+.tabs{display:flex;gap:2px;background:rgba(255,255,255,.1);padding:3px;border-radius:8px;flex-wrap:wrap}
+.tab{padding:6px 11px;border-radius:6px;border:none;background:transparent;cursor:pointer;font-size:12px;color:rgba(255,255,255,.6);font-family:inherit;font-weight:500;transition:all .15s;white-space:nowrap}
 .tab.active{background:#E8293A;color:#fff}
 .tab:hover:not(.active){color:#fff}
 .sync-status{font-size:11px;color:rgba(255,255,255,.5);display:flex;align-items:center;gap:4px}
@@ -25,37 +27,49 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .sync-dot.ok{background:#22c55e}
 .sync-dot.loading{background:#f59e0b;animation:pulse 1s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
 .view{display:none;padding:14px 16px}
 .view.active{display:block}
-@media(min-width:900px){.view{max-width:1200px;margin:0 auto;padding:20px 24px}}
+@media(min-width:900px){.view{max-width:1300px;margin:0 auto;padding:20px 24px}}
+
+/* KPI */
 .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
 @media(min-width:700px){.kpi-grid{grid-template-columns:repeat(4,1fr)}}
 .kpi{background:#fff;border-radius:10px;padding:12px 14px;border:1px solid #e5e7eb}
 .kpi-label{font-size:11px;color:#6b7280;margin-bottom:4px}
 .kpi-val{font-size:20px;font-weight:600;color:#1a1a2e}
-.kpi-val.red{color:#E8293A}
-.kpi-val.blue{color:#2E6DA4}
+.kpi-val.red{color:#E8293A}.kpi-val.blue{color:#2E6DA4}.kpi-val.green{color:#16a34a}
 .kpi-sub{font-size:10px;color:#9ca3af;margin-top:2px}
+
+/* ALERTAS */
 .alert-box{background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:12px 14px;margin-bottom:12px}
 .alert-box h3{font-size:12px;font-weight:600;color:#991b1b;margin-bottom:8px}
 .alert-item{font-size:12px;color:#7f1d1d;padding:5px 0;border-bottom:1px solid rgba(252,165,165,.3);display:flex;justify-content:space-between;align-items:center;gap:8px}
 .alert-item:last-child{border:none}
 .alert-item span:first-child{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .alert-badge{background:#fca5a5;color:#7f1d1d;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;flex-shrink:0}
+
+/* CAT */
 .section-title{font-size:13px;font-weight:600;color:#1a1a2e;margin-bottom:10px}
-.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
-.cat-card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:12px;text-align:center;cursor:pointer;transition:all .15s}
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(115px,1fr));gap:8px}
+.cat-card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:11px;text-align:center;cursor:pointer;transition:all .15s}
 .cat-card:hover{border-color:#E8293A}
-.cat-icon{font-size:20px;margin-bottom:5px}
+.cat-icon{font-size:20px;margin-bottom:4px}
 .cat-name{font-size:11px;font-weight:600;color:#1a1a2e}
 .cat-count{font-size:10px;color:#9ca3af;margin-top:1px}
 .cat-stock{font-size:17px;font-weight:600;color:#2E6DA4;margin-top:3px}
+
+/* TOOLBAR */
 .toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
 .toolbar input,.toolbar select{padding:8px 11px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:#1a1a2e;outline:none}
 .toolbar input{flex:1;min-width:0}
 .toolbar input:focus,.toolbar select:focus{border-color:#E8293A}
-.btn-primary{padding:8px 14px;background:#E8293A;color:#fff;border:none;border-radius:8px;font-size:13px;font-family:inherit;cursor:pointer;font-weight:600;white-space:nowrap}
+.btn-primary{padding:8px 14px;background:#E8293A;color:#fff;border:none;border-radius:8px;font-size:13px;font-family:inherit;cursor:pointer;font-weight:600;white-space:nowrap;transition:opacity .15s}
 .btn-primary:hover{opacity:.88}
+.btn-secondary{padding:8px 14px;background:#fff;color:#1a1a2e;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;cursor:pointer;font-weight:500;white-space:nowrap}
+.btn-secondary:hover{background:#f4f5f7}
+
+/* PILLS */
 .pill{display:inline-block;font-size:11px;padding:3px 9px;border-radius:10px;font-weight:600}
 .pill-ok{background:#dcfce7;color:#166534}
 .pill-low{background:#fef3c7;color:#92400e}
@@ -63,8 +77,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .pill-alta{background:#dcfce7;color:#166534}
 .pill-med{background:#fef3c7;color:#92400e}
 .pill-baja{background:#fee2e2;color:#991b1b}
+/* STATUS PEDIDOS */
+.s-pendiente{background:#f3f4f6;color:#374151}
+.s-cotizado{background:#dbeafe;color:#1e40af}
+.s-confirmado{background:#fef3c7;color:#92400e}
+.s-instalado{background:#d1fae5;color:#065f46}
+.s-cobrado{background:#dcfce7;color:#166534}
 
-/* TARJETAS MÓVIL */
+/* TARJETAS INVENTARIO MÓVIL */
 .prod-list{display:flex;flex-direction:column;gap:8px}
 .prod-card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px}
 .prod-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px}
@@ -103,27 +123,71 @@ tr:hover td{background:#fafafa}
 .precio-table-wrap{display:none}
 @media(min-width:750px){.precio-list{display:none}.precio-table-wrap{display:block;overflow-x:auto;background:#fff;border-radius:10px;border:1px solid #e5e7eb}}
 
-/* MODAL */
+/* ====== PEDIDOS ====== */
+.pedidos-header{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+.filter-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px}
+.filter-tab{padding:5px 12px;border-radius:20px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;font-size:12px;font-family:inherit;color:#6b7280;transition:all .15s}
+.filter-tab.active{background:#E8293A;color:#fff;border-color:#E8293A}
+
+.pedido-card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:8px;transition:box-shadow .15s}
+.pedido-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.pedido-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px}
+.pedido-num{font-size:11px;color:#9ca3af;font-weight:600}
+.pedido-cliente{font-size:14px;font-weight:600;color:#1a1a2e}
+.pedido-tel{font-size:12px;color:#6b7280;margin-top:1px}
+.pedido-dir{font-size:12px;color:#6b7280;margin-top:1px;font-style:italic}
+.pedido-items{margin:8px 0;padding:8px;background:#f8f9fa;border-radius:7px}
+.pedido-item-row{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;color:#374151;border-bottom:1px solid #f0f0f0}
+.pedido-item-row:last-child{border:none}
+.pedido-total{font-weight:600;color:#1a1a2e;font-size:13px;margin-top:4px}
+.pedido-footer{display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:8px;flex-wrap:wrap}
+.pedido-fecha{font-size:11px;color:#9ca3af}
+.pedido-actions{display:flex;gap:5px;flex-wrap:wrap}
+.btn-status{padding:5px 10px;border-radius:6px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;font-size:11px;font-family:inherit;color:#374151;font-weight:500}
+.btn-status:hover{background:#f4f5f7}
+.btn-wa{padding:5px 10px;border-radius:6px;border:none;background:#25d366;color:#fff;cursor:pointer;font-size:11px;font-family:inherit;font-weight:600}
+.btn-del{padding:5px 9px;border-radius:6px;border:1px solid #fca5a5;background:#fff;cursor:pointer;font-size:11px;font-family:inherit;color:#991b1b}
+
+/* MODAL PEDIDO */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;justify-content:center}
 @media(min-width:500px){.modal-overlay{align-items:center}}
 .modal-overlay.open{display:flex}
-.modal{background:#fff;border-radius:14px 14px 0 0;padding:20px 18px;width:100%;max-height:93vh;overflow-y:auto}
-@media(min-width:500px){.modal{border-radius:14px;width:min(500px,95vw);max-height:90vh}}
-.modal h3{font-size:15px;font-weight:600;margin-bottom:16px;color:#1a1a2e}
-.field{margin-bottom:11px}
+.modal{background:#fff;border-radius:14px 14px 0 0;padding:18px;width:100%;max-height:93vh;overflow-y:auto}
+@media(min-width:520px){.modal{border-radius:14px;width:min(560px,96vw);max-height:90vh}}
+.modal h3{font-size:15px;font-weight:600;margin-bottom:14px;color:#1a1a2e}
+.field{margin-bottom:10px}
 .field label{font-size:12px;color:#6b7280;display:block;margin-bottom:3px;font-weight:500}
 .field input,.field select,.field textarea{width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;font-family:inherit;background:#fff;color:#1a1a2e;outline:none}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:#E8293A}
-.field textarea{min-height:55px;resize:vertical}
+.field textarea{min-height:50px;resize:vertical}
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
-.btn-cancel{padding:8px 16px;background:transparent;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;cursor:pointer;color:#6b7280}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+.btn-cancel{padding:8px 14px;background:transparent;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;cursor:pointer;color:#6b7280}
 
+/* ITEMS EN MODAL */
+.items-section{margin-top:10px}
+.items-section h4{font-size:12px;font-weight:600;color:#1a1a2e;margin-bottom:8px}
+.item-row{display:grid;grid-template-columns:1fr 80px 90px 32px;gap:6px;align-items:center;margin-bottom:6px}
+.item-row select,.item-row input{padding:7px 9px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;font-family:inherit;background:#fff;color:#1a1a2e;outline:none;width:100%}
+.item-row select:focus,.item-row input:focus{border-color:#E8293A}
+.btn-rm{padding:5px 8px;background:transparent;border:1px solid #fca5a5;border-radius:6px;cursor:pointer;font-size:13px;color:#991b1b}
+.add-item-btn{padding:6px 12px;background:transparent;border:1px dashed #d1d5db;border-radius:7px;cursor:pointer;font-size:12px;font-family:inherit;color:#6b7280;width:100%;margin-top:4px}
+.add-item-btn:hover{border-color:#E8293A;color:#E8293A}
+.total-preview{background:#f8f9fa;border-radius:7px;padding:8px 12px;margin-top:8px;font-size:13px;font-weight:600;color:#1a1a2e;display:flex;justify-content:space-between}
+
+/* WA MODAL */
+.wa-modal{background:#fff;border-radius:14px;padding:18px;width:min(480px,96vw);max-height:85vh;overflow-y:auto}
+.wa-msg{background:#e7fde4;border-radius:8px;padding:12px;font-size:13px;line-height:1.6;color:#1a1a2e;white-space:pre-wrap;font-family:inherit;margin-bottom:12px;border:1px solid #b7f0b0}
+.wa-footer{display:flex;gap:8px;flex-wrap:wrap}
+.btn-wa-copy{padding:8px 14px;background:#1a1a2e;color:#fff;border:none;border-radius:8px;font-size:13px;font-family:inherit;cursor:pointer;font-weight:600}
+.btn-wa-send{padding:8px 14px;background:#25d366;color:#fff;border:none;border-radius:8px;font-size:13px;font-family:inherit;cursor:pointer;font-weight:600}
+
+/* LOADING / TOAST */
 .loading-screen{position:fixed;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:14px}
 .loading-screen img{width:90px}
 .loading-bar{width:160px;height:3px;background:rgba(255,255,255,.15);border-radius:2px;overflow:hidden}
-.loading-bar-inner{height:100%;width:0;background:#E8293A;border-radius:2px;animation:load 1.5s ease forwards}
-@keyframes load{to{width:100%}}
+.loading-bar-inner{height:100%;width:0;background:#E8293A;border-radius:2px;animation:ld 1.5s ease forwards}
+@keyframes ld{to{width:100%}}
 .loading-screen p{font-size:12px;color:rgba(255,255,255,.5)}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(10px);background:#1a1a2e;color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;z-index:999;opacity:0;transition:all .25s;pointer-events:none;border-left:3px solid #E8293A;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -133,6 +197,7 @@ tr:hover td{background:#fafafa}
 </style>
 </head>
 <body>
+
 <div class="loading-screen" id="loading">
   <img src="icons/icon-192x192.png" alt="Alarmas Ezquerra">
   <div class="loading-bar"><div class="loading-bar-inner"></div></div>
@@ -144,16 +209,19 @@ tr:hover td{background:#fafafa}
   <button class="btn-install" id="btn-install">Instalar</button>
   <button onclick="document.getElementById('install-banner').classList.remove('show')" style="background:none;border:none;color:rgba(255,255,255,.4);cursor:pointer;font-size:18px">✕</button>
 </div>
+
 <div class="header">
   <div class="logo"><img src="icons/icon-96x96.png" alt="Alarmas Ezquerra"></div>
   <div class="tabs">
     <button class="tab active" onclick="showView('dashboard',this)">Dashboard</button>
+    <button class="tab" onclick="showView('pedidos',this)">Pedidos</button>
     <button class="tab" onclick="showView('inventario',this)">Inventario</button>
     <button class="tab" onclick="showView('precios',this)">Precios</button>
   </div>
   <div class="sync-status"><div class="sync-dot" id="sync-dot"></div><span id="sync-label">Conectando...</span></div>
 </div>
 
+<!-- DASHBOARD -->
 <div id="view-dashboard" class="view active">
   <div class="kpi-grid" id="kpi-grid"></div>
   <div id="dash-alerts"></div>
@@ -161,6 +229,17 @@ tr:hover td{background:#fafafa}
   <div class="cat-grid" id="cat-grid"></div>
 </div>
 
+<!-- PEDIDOS -->
+<div id="view-pedidos" class="view">
+  <div class="pedidos-header">
+    <button class="btn-primary" onclick="openPedidoModal()">+ Nuevo pedido</button>
+    <input type="text" id="search-pedidos" placeholder="Buscar cliente..." oninput="renderPedidos()" style="flex:1;min-width:140px;padding:8px 11px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:#1a1a2e;outline:none">
+  </div>
+  <div class="filter-tabs" id="filter-tabs"></div>
+  <div id="pedidos-list"></div>
+</div>
+
+<!-- INVENTARIO -->
 <div id="view-inventario" class="view">
   <div class="toolbar">
     <input type="text" id="search" placeholder="Buscar..." oninput="renderInv()">
@@ -169,15 +248,16 @@ tr:hover td{background:#fafafa}
   </div>
   <div class="prod-list" id="prod-list"></div>
   <div class="table-wrap"><table><thead><tr>
-    <th style="width:28%">Producto</th><th style="width:14%">Categoría</th>
+    <th style="width:27%">Producto</th><th style="width:13%">Categoría</th>
     <th class="num" style="width:7%">Stock</th><th class="num" style="width:7%">Mín.</th>
     <th class="num" style="width:11%">Costo</th><th class="num" style="width:11%">Precio</th>
-    <th style="width:10%">Estado</th><th style="width:12%"></th>
+    <th style="width:10%">Estado</th><th style="width:14%"></th>
   </tr></thead><tbody id="inv-body"></tbody></table></div>
 </div>
 
+<!-- PRECIOS -->
 <div id="view-precios" class="view">
-  <p style="font-size:12px;color:#6b7280;margin-bottom:12px">Edita el precio. El margen se actualiza automáticamente en Firebase.</p>
+  <p style="font-size:12px;color:#6b7280;margin-bottom:12px">Edita el precio. El margen se actualiza automáticamente.</p>
   <div class="precio-list" id="precio-list"></div>
   <div class="precio-table-wrap"><table><thead><tr>
     <th style="width:30%">Producto</th><th style="width:14%">Categoría</th>
@@ -187,7 +267,8 @@ tr:hover td{background:#fafafa}
   <p style="font-size:11px;color:#9ca3af;margin-top:10px">Verde &gt;40% · Amarillo 20–40% · Rojo &lt;20%</p>
 </div>
 
-<div class="modal-overlay" id="modal" onclick="handleOverlayClick(event)">
+<!-- MODAL INVENTARIO -->
+<div class="modal-overlay" id="modal" onclick="handleOverlayClick(event,'modal')">
   <div class="modal">
     <h3 id="modal-title">Agregar producto</h3>
     <div class="field"><label>Nombre *</label><input id="f-nombre" type="text" placeholder="Ej: Sensor de movimiento PR200"></div>
@@ -208,18 +289,57 @@ tr:hover td{background:#fafafa}
     <div class="field"><label>Modelo / SKU</label><input id="f-sku" type="text" placeholder="Ej: PR200"></div>
     <div class="field"><label>Notas</label><textarea id="f-notas" placeholder="Especificaciones, proveedor, etc."></textarea></div>
     <div class="modal-footer">
-      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-cancel" onclick="closeModal('modal')">Cancelar</button>
       <button class="btn-primary" onclick="saveProduct()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PEDIDO -->
+<div class="modal-overlay" id="modal-pedido" onclick="handleOverlayClick(event,'modal-pedido')">
+  <div class="modal">
+    <h3 id="pedido-modal-title">Nuevo pedido</h3>
+    <div class="two-col">
+      <div class="field"><label>Nombre del cliente *</label><input id="p-nombre" type="text" placeholder="Ej: Juan García"></div>
+      <div class="field"><label>Teléfono</label><input id="p-tel" type="tel" placeholder="477 000 0000"></div>
+    </div>
+    <div class="field"><label>Dirección</label><input id="p-dir" type="text" placeholder="Calle, colonia, ciudad"></div>
+    <div class="field"><label>Notas del pedido</label><textarea id="p-notas" placeholder="Tipo de instalación, observaciones..."></textarea></div>
+    <div class="items-section">
+      <h4>Productos del pedido</h4>
+      <div id="items-container"></div>
+      <button class="add-item-btn" onclick="addItemRow()">+ Agregar producto</button>
+      <div class="total-preview"><span>Total estimado:</span><span id="total-preview">$0</span></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-pedido')">Cancelar</button>
+      <button class="btn-primary" onclick="savePedido()">Crear pedido</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL WA -->
+<div class="modal-overlay" id="modal-wa" onclick="handleOverlayClick(event,'modal-wa')">
+  <div class="wa-modal">
+    <h3 style="margin-bottom:12px;font-size:15px;font-weight:600">Mensaje para WhatsApp</h3>
+    <div class="wa-msg" id="wa-msg-content"></div>
+    <div class="wa-footer">
+      <button class="btn-wa-copy" onclick="copyWA()">📋 Copiar</button>
+      <button class="btn-wa-send" id="btn-wa-send">💬 Abrir WhatsApp</button>
+      <button class="btn-cancel" onclick="closeModal('modal-wa')">Cerrar</button>
     </div>
   </div>
 </div>
 
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import{getFirestore,collection,getDocs,addDoc,setDoc,deleteDoc,doc,onSnapshot}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import{getFirestore,collection,getDocs,addDoc,setDoc,deleteDoc,doc,onSnapshot,writeBatch,increment}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
 const firebaseConfig={apiKey:"AIzaSyBEAxj5zECsZEWTFHQtfiAedXLPU9Ht_bw",authDomain:"alarmas-ezquerra-ba683.firebaseapp.com",projectId:"alarmas-ezquerra-ba683",storageBucket:"alarmas-ezquerra-ba683.firebasestorage.app",messagingSenderId:"955381296787",appId:"1:955381296787:web:54c9570167633186bea766"};
-const app=initializeApp(firebaseConfig),db=getFirestore(app),COL="productos";
-const INITIAL=[
+const app=initializeApp(firebaseConfig),db=getFirestore(app);
+const COL_PROD="productos", COL_PED="pedidos";
+
+const INITIAL_PROD=[
   {nombre:'Panel H700-4GE+WIFI',cat:'Panel de control',stock:3,min:2,costo:1355,precio:2499,sku:'H700-4GE+WIFI',notas:'7" IPS, 4G+WiFi, 32h batería'},
   {nombre:'Panel H502-4GE+WIFI',cat:'Panel de control',stock:0,min:2,costo:990,precio:1799,sku:'H502-4GE+WIFI',notas:'4.3" IPS, 4G+WiFi, 12h'},
   {nombre:'Detector de movimiento PR200',cat:'Sensores de movimiento',stock:8,min:5,costo:162,precio:320,sku:'PR200',notas:'433MHz, 110°'},
@@ -237,46 +357,256 @@ const INITIAL=[
   {nombre:'Kit NVR 4 canales Kerui',cat:'Cámaras NVR',stock:1,min:2,costo:3800,precio:6500,sku:'NVR-4CH',notas:'NVR + 4 cámaras WiFi'},
   {nombre:'Alarma Kerui G70 Kit',cat:'Panel de control',stock:3,min:2,costo:1530,precio:2800,sku:'G70-KIT',notas:'Kit completo'},
 ];
+
 const CATS={'Sensores de movimiento':'📡','Panel de control':'🖥️','Sensores de puerta':'🚪','Controles remotos':'🎮','Sensores de vibración':'📳','Sensores de humo':'🔥','Sensores perimetrales':'🔭','Cámaras NVR':'📷','Accesorios':'🔧'};
-let products=[],editId=null;
+const STATUSES=['Pendiente','Cotizado','Confirmado','Instalado','Cobrado'];
+const STATUS_NEXT={'Pendiente':'Cotizado','Cotizado':'Confirmado','Confirmado':'Instalado','Instalado':'Cobrado'};
+const STATUS_CLS={'Pendiente':'s-pendiente','Cotizado':'s-cotizado','Confirmado':'s-confirmado','Instalado':'s-instalado','Cobrado':'s-cobrado'};
+
+let products=[], pedidos=[], editId=null, editPedidoId=null, pedidoFilter='Todos';
+
 const fmt=n=>'$'+Math.round(n).toLocaleString('es-MX');
 const setSync=s=>{const d=document.getElementById('sync-dot'),l=document.getElementById('sync-label');if(s==='ok'){d.className='sync-dot ok';l.textContent='Sincronizado';}else if(s==='loading'){d.className='sync-dot loading';l.textContent='Guardando...';}else{d.className='sync-dot';l.textContent='Sin conexión';}};
 const toast=msg=>{const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);};
 const getSt=p=>p.stock===0?{cls:'pill-out',txt:'Sin stock'}:p.stock<=p.min?{cls:'pill-low',txt:'Stock bajo'}:{cls:'pill-ok',txt:'OK'};
-async function seedIfEmpty(){const s=await getDocs(collection(db,COL));if(s.empty)for(const p of INITIAL)await addDoc(collection(db,COL),p);}
+const fmtDate=ts=>{if(!ts)return'';const d=ts.toDate?ts.toDate():new Date(ts);return d.toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'});};
+const pedidoTotal=items=>items.reduce((a,i)=>a+(i.precio*i.qty),0);
+
+async function seedIfEmpty(){
+  const s=await getDocs(collection(db,COL_PROD));
+  if(s.empty)for(const p of INITIAL_PROD)await addDoc(collection(db,COL_PROD),p);
+}
+
+/* ===== DASHBOARD ===== */
 function renderDash(){
-  const tot=products.reduce((a,p)=>a+p.stock,0),val=products.reduce((a,p)=>a+p.stock*p.costo,0),sin=products.filter(p=>p.stock===0).length,baj=products.filter(p=>p.stock>0&&p.stock<=p.min).length;
-  document.getElementById('kpi-grid').innerHTML=`<div class="kpi"><div class="kpi-label">Productos</div><div class="kpi-val">${products.length}</div></div><div class="kpi"><div class="kpi-label">En stock</div><div class="kpi-val blue">${tot}</div></div><div class="kpi"><div class="kpi-label">Valor inventario</div><div class="kpi-val" style="font-size:16px">${fmt(val)}</div><div class="kpi-sub">a precio costo</div></div><div class="kpi"><div class="kpi-label">Alertas</div><div class="kpi-val red">${sin+baj}</div><div class="kpi-sub">${sin} agotado·${baj} bajo</div></div>`;
+  const tot=products.reduce((a,p)=>a+p.stock,0);
+  const val=products.reduce((a,p)=>a+p.stock*p.costo,0);
+  const sin=products.filter(p=>p.stock===0).length;
+  const baj=products.filter(p=>p.stock>0&&p.stock<=p.min).length;
+  const pedPend=pedidos.filter(p=>p.status==='Pendiente'||p.status==='Cotizado').length;
+  const pedMes=pedidos.filter(p=>{const d=p.fecha?.toDate?p.fecha.toDate():new Date(p.fecha||0);const n=new Date();return d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();}).length;
+  document.getElementById('kpi-grid').innerHTML=`
+    <div class="kpi"><div class="kpi-label">Productos</div><div class="kpi-val">${products.length}</div></div>
+    <div class="kpi"><div class="kpi-label">En stock</div><div class="kpi-val blue">${tot}</div></div>
+    <div class="kpi"><div class="kpi-label">Valor inventario</div><div class="kpi-val" style="font-size:15px">${fmt(val)}</div><div class="kpi-sub">a precio costo</div></div>
+    <div class="kpi"><div class="kpi-label">Alertas stock</div><div class="kpi-val red">${sin+baj}</div><div class="kpi-sub">${sin} agotado · ${baj} bajo</div></div>
+    <div class="kpi"><div class="kpi-label">Pedidos activos</div><div class="kpi-val blue">${pedPend}</div><div class="kpi-sub">pendiente/cotizado</div></div>
+    <div class="kpi"><div class="kpi-label">Pedidos este mes</div><div class="kpi-val green">${pedMes}</div></div>
+  `;
   const al=products.filter(p=>p.stock<=p.min);
   document.getElementById('dash-alerts').innerHTML=al.length?`<div class="alert-box"><h3>⚠ Stock bajo o agotado</h3>${al.map(p=>`<div class="alert-item"><span>${p.nombre}</span><span class="alert-badge">${p.stock===0?'Agotado':p.stock+' uds'}</span></div>`).join('')}</div>`:'';
   const bc={};products.forEach(p=>{if(!bc[p.cat])bc[p.cat]={count:0,stock:0};bc[p.cat].count++;bc[p.cat].stock+=p.stock;});
   document.getElementById('cat-grid').innerHTML=Object.entries(bc).map(([cat,d])=>`<div class="cat-card" onclick="filterByCat('${cat}')"><div class="cat-icon">${CATS[cat]||'📦'}</div><div class="cat-name">${cat}</div><div class="cat-count">${d.count} productos</div><div class="cat-stock">${d.stock} uds</div></div>`).join('');
 }
-window.filterByCat=cat=>{showView('inventario',document.querySelectorAll('.tab')[1]);document.getElementById('filter-cat').value=cat;renderInv();};
+
+/* ===== PEDIDOS ===== */
+function renderFilterTabs(){
+  const counts={Todos:pedidos.length};
+  STATUSES.forEach(s=>{counts[s]=pedidos.filter(p=>p.status===s).length;});
+  const all=['Todos',...STATUSES];
+  document.getElementById('filter-tabs').innerHTML=all.map(s=>`<button class="filter-tab${pedidoFilter===s?' active':''}" onclick="setPedidoFilter('${s}')">${s} <span style="opacity:.6">${counts[s]||0}</span></button>`).join('');
+}
+
+window.setPedidoFilter=s=>{pedidoFilter=s;renderPedidos();};
+
+window.renderPedidos=()=>{
+  renderFilterTabs();
+  const q=(document.getElementById('search-pedidos')?.value||'').toLowerCase();
+  let list=pedidos.filter(p=>pedidoFilter==='Todos'||p.status===pedidoFilter);
+  if(q)list=list.filter(p=>p.cliente.toLowerCase().includes(q)||(p.tel||'').includes(q));
+  list=list.sort((a,b)=>{const da=a.fecha?.toDate?a.fecha.toDate():new Date(a.fecha||0);const db2=b.fecha?.toDate?b.fecha.toDate():new Date(b.fecha||0);return db2-da;});
+  if(!list.length){document.getElementById('pedidos-list').innerHTML=`<div style="text-align:center;padding:40px;color:#9ca3af;font-size:14px">No hay pedidos ${pedidoFilter!=='Todos'?'con estatus "'+pedidoFilter+'"':''}</div>`;return;}
+  document.getElementById('pedidos-list').innerHTML=list.map(p=>{
+    const tot=pedidoTotal(p.items||[]);
+    const nextS=STATUS_NEXT[p.status];
+    return`<div class="pedido-card">
+      <div class="pedido-card-top">
+        <div>
+          <div class="pedido-num">#${p.num||'—'} · ${fmtDate(p.fecha)}</div>
+          <div class="pedido-cliente">${p.cliente}</div>
+          ${p.tel?`<div class="pedido-tel">📞 ${p.tel}</div>`:''}
+          ${p.dir?`<div class="pedido-dir">📍 ${p.dir}</div>`:''}
+        </div>
+        <span class="pill ${STATUS_CLS[p.status]||'s-pendiente'}">${p.status}</span>
+      </div>
+      ${p.items?.length?`<div class="pedido-items">${p.items.map(i=>`<div class="pedido-item-row"><span>${i.nombre} ×${i.qty}</span><span>${fmt(i.precio*i.qty)}</span></div>`).join('')}<div class="pedido-total" style="margin-top:6px;text-align:right">Total: ${fmt(tot)}</div></div>`:''}
+      ${p.notas?`<div style="font-size:12px;color:#6b7280;margin-top:6px;padding:6px 8px;background:#f8f9fa;border-radius:6px">${p.notas}</div>`:''}
+      <div class="pedido-footer">
+        <div class="pedido-actions">
+          ${nextS?`<button class="btn-status" onclick="avanzarStatus('${p.id}','${nextS}')">→ ${nextS}</button>`:''}
+          <button class="btn-wa" onclick="abrirWA('${p.id}')">💬 WA</button>
+          <button class="btn-icon" onclick="editPedido('${p.id}')">✏</button>
+          <button class="btn-del" onclick="deletePedido('${p.id}')">✕</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+};
+
+window.avanzarStatus=async(id,nextS)=>{
+  const p=pedidos.find(x=>x.id===id);if(!p)return;
+  setSync('loading');
+  // Si pasa a Confirmado → descontar stock
+  if(nextS==='Confirmado'&&p.status!=='Confirmado'){
+    const batch=writeBatch(db);
+    (p.items||[]).forEach(item=>{
+      if(item.prodId){batch.update(doc(db,COL_PROD,item.prodId),{stock:increment(-item.qty)});}
+    });
+    batch.update(doc(db,COL_PED,id),{status:nextS});
+    await batch.commit();
+    toast(`Pedido confirmado — stock descontado`);
+  } else {
+    await setDoc(doc(db,COL_PED,id),{...p,status:nextS});
+    toast(`Estatus → ${nextS}`);
+  }
+  setSync('ok');
+};
+
+window.abrirWA=id=>{
+  const p=pedidos.find(x=>x.id===id);if(!p)return;
+  const items=(p.items||[]).map(i=>`  • ${i.nombre} ×${i.qty} — ${fmt(i.precio*i.qty)}`).join('\n');
+  const tot=pedidoTotal(p.items||[]);
+  const msg=`🔒 *Alarmas Ezquerra*\nPedido #${p.num||'—'}\n\n*Cliente:* ${p.cliente}${p.tel?'\n*Tel:* '+p.tel:''}${p.dir?'\n*Dirección:* '+p.dir:''}\n\n*Productos:*\n${items}\n\n*Total: ${fmt(tot)}*\n\n*Estatus:* ${p.status}${p.notas?'\n\n_'+p.notas+'_':''}\n\nGracias por su preferencia 🛡️`;
+  document.getElementById('wa-msg-content').textContent=msg;
+  const tel=p.tel?p.tel.replace(/\D/g,''):'';
+  document.getElementById('btn-wa-send').onclick=()=>{const url=tel?`https://wa.me/52${tel}?text=${encodeURIComponent(msg)}`:`https://wa.me/?text=${encodeURIComponent(msg)}`;window.open(url,'_blank');};
+  document.getElementById('modal-wa').classList.add('open');
+};
+
+window.copyWA=()=>{navigator.clipboard.writeText(document.getElementById('wa-msg-content').textContent);toast('Copiado al portapapeles');};
+
+/* MODAL PEDIDO */
+window.openPedidoModal=p=>{
+  editPedidoId=p?p.id:null;
+  document.getElementById('pedido-modal-title').textContent=p?'Editar pedido':'Nuevo pedido';
+  document.getElementById('p-nombre').value=p?p.cliente:'';
+  document.getElementById('p-tel').value=p?p.tel:'';
+  document.getElementById('p-dir').value=p?p.dir:'';
+  document.getElementById('p-notas').value=p?p.notas:'';
+  document.getElementById('items-container').innerHTML='';
+  itemCounter=0;
+  if(p?.items?.length){p.items.forEach(i=>addItemRow(i));}else{addItemRow();}
+  updateTotalPreview();
+  document.getElementById('modal-pedido').classList.add('open');
+};
+
+let itemCounter=0;
+window.addItemRow=existing=>{
+  const idx=itemCounter++;
+  const opts=products.map(p=>`<option value="${p.id}" data-precio="${p.precio}" data-nombre="${p.nombre}" ${existing&&existing.prodId===p.id?'selected':''}>${p.nombre} (${fmt(p.precio)})</option>`).join('');
+  const row=document.createElement('div');
+  row.className='item-row';row.id=`item-row-${idx}`;
+  row.innerHTML=`<select onchange="updateTotalPreview()">${opts}</select><input type="number" min="1" value="${existing?.qty||1}" placeholder="Cant." oninput="updateTotalPreview()"><input type="number" min="0" value="${existing?.precio||''}" placeholder="Precio" oninput="updateTotalPreview()"><button class="btn-rm" onclick="document.getElementById('item-row-${idx}').remove();updateTotalPreview()">✕</button>`;
+  document.getElementById('items-container').appendChild(row);
+  // Auto-fill precio
+  const sel=row.querySelector('select');
+  const priceIn=row.querySelectorAll('input')[1];
+  if(!existing){const selProd=products.find(x=>x.id===sel.value);if(selProd&&!priceIn.value)priceIn.value=selProd.precio;}
+  sel.addEventListener('change',()=>{const selProd=products.find(x=>x.id===sel.value);if(selProd)priceIn.value=selProd.precio;updateTotalPreview();});
+};
+
+window.updateTotalPreview=()=>{
+  let tot=0;
+  document.querySelectorAll('#items-container .item-row').forEach(row=>{
+    const qty=parseInt(row.querySelectorAll('input')[0].value)||0;
+    const precio=parseFloat(row.querySelectorAll('input')[1].value)||0;
+    tot+=qty*precio;
+  });
+  document.getElementById('total-preview').textContent=fmt(tot);
+};
+
+window.savePedido=async()=>{
+  const cliente=document.getElementById('p-nombre').value.trim();
+  if(!cliente){alert('Ingresa el nombre del cliente.');return;}
+  const items=[];
+  document.querySelectorAll('#items-container .item-row').forEach(row=>{
+    const sel=row.querySelector('select');
+    const qty=parseInt(row.querySelectorAll('input')[0].value)||1;
+    const precio=parseFloat(row.querySelectorAll('input')[1].value)||0;
+    const prod=products.find(x=>x.id===sel.value);
+    if(prod)items.push({prodId:prod.id,nombre:prod.nombre,qty,precio});
+  });
+  if(!items.length){alert('Agrega al menos un producto.');return;}
+  setSync('loading');
+  const obj={
+    cliente,tel:document.getElementById('p-tel').value.trim(),
+    dir:document.getElementById('p-dir').value.trim(),
+    notas:document.getElementById('p-notas').value.trim(),
+    items,status:editPedidoId?(pedidos.find(x=>x.id===editPedidoId)?.status||'Pendiente'):'Pendiente',
+    fecha:editPedidoId?(pedidos.find(x=>x.id===editPedidoId)?.fecha||new Date()):new Date(),
+  };
+  if(editPedidoId){
+    await setDoc(doc(db,COL_PED,editPedidoId),obj);toast('Pedido actualizado');
+  } else {
+    obj.num=pedidos.length+1;obj.fecha=new Date();
+    await addDoc(collection(db,COL_PED),obj);toast('Pedido creado');
+  }
+  setSync('ok');closeModal('modal-pedido');
+};
+
+window.editPedido=id=>{const p=pedidos.find(x=>x.id===id);if(p)openPedidoModal(p);};
+window.deletePedido=async id=>{if(!confirm('¿Eliminar este pedido?'))return;setSync('loading');await deleteDoc(doc(db,COL_PED,id));setSync('ok');toast('Pedido eliminado');};
+
+/* ===== INVENTARIO ===== */
+window.filterByCat=cat=>{showView('inventario',document.querySelectorAll('.tab')[2]);document.getElementById('filter-cat').value=cat;renderInv();};
+
 window.renderInv=()=>{
-  const q=document.getElementById('search').value.toLowerCase(),cat=document.getElementById('filter-cat').value;
+  const q=document.getElementById('search').value.toLowerCase();
+  const cat=document.getElementById('filter-cat').value;
   const list=products.filter(p=>(!q||p.nombre.toLowerCase().includes(q)||(p.sku||'').toLowerCase().includes(q)||p.cat.toLowerCase().includes(q))&&(!cat||p.cat===cat));
   document.getElementById('prod-list').innerHTML=list.map(p=>{const st=getSt(p);return`<div class="prod-card"><div class="prod-card-top"><div><div class="prod-name">${p.nombre}</div><div class="prod-sku">${p.sku}</div></div><span class="pill ${st.cls}">${st.txt}</span></div><div class="prod-card-grid"><div class="prod-stat"><div class="prod-stat-label">Stock</div><div class="prod-stat-val">${p.stock} uds</div></div><div class="prod-stat"><div class="prod-stat-label">Costo</div><div class="prod-stat-val" style="font-size:12px">${fmt(p.costo)}</div></div><div class="prod-stat"><div class="prod-stat-label">Precio</div><div class="prod-stat-val" style="font-size:12px">${fmt(p.precio)}</div></div></div><div class="prod-card-bottom"><span class="prod-cat">${p.cat}</span><div class="prod-actions"><button class="btn-icon" onclick="editProduct('${p.id}')">✏</button><button class="btn-icon" onclick="deleteProduct('${p.id}')">✕</button></div></div></div>`;}).join('');
   document.getElementById('inv-body').innerHTML=list.map(p=>{const st=getSt(p);return`<tr><td title="${p.nombre}">${p.nombre}</td><td>${p.cat}</td><td class="num">${p.stock}</td><td class="num" style="color:#9ca3af">${p.min}</td><td class="num">${fmt(p.costo)}</td><td class="num">${fmt(p.precio)}</td><td><span class="pill ${st.cls}">${st.txt}</span></td><td style="display:flex;gap:5px"><button class="btn-icon" onclick="editProduct('${p.id}')">✏</button><button class="btn-icon" onclick="deleteProduct('${p.id}')">✕</button></td></tr>`;}).join('');
 };
+
 window.renderPrecios=()=>{
   document.getElementById('precio-list').innerHTML=products.map(p=>{const gan=p.precio-p.costo,mar=p.costo>0?Math.round(gan/p.precio*100):0,mcls=mar>=40?'pill-alta':mar>=20?'pill-med':'pill-baja';return`<div class="precio-card"><div class="precio-card-top"><div class="prod-name">${p.nombre}</div><span class="pill ${mcls}">${mar}%</span></div><div class="precio-grid"><div class="precio-field"><label>Costo</label><div class="val">${fmt(p.costo)}</div></div><div class="precio-field"><label>Ganancia</label><div class="val" style="color:#166534">${fmt(gan)}</div></div></div><div class="precio-input-wrap"><label>Precio de venta MXN</label><input class="precio-input" type="number" value="${p.precio}" min="0" step="1" onchange="updatePrecio('${p.id}',this.value)"></div></div>`;}).join('');
   document.getElementById('precio-body').innerHTML=products.map(p=>{const gan=p.precio-p.costo,mar=p.costo>0?Math.round(gan/p.precio*100):0,mcls=mar>=40?'pill-alta':mar>=20?'pill-med':'pill-baja';return`<tr><td title="${p.nombre}">${p.nombre}</td><td>${p.cat}</td><td class="num">${fmt(p.costo)}</td><td class="num"><input style="width:100px;padding:4px 7px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;text-align:right;background:#fff;color:#1a1a2e;outline:none;font-family:inherit" type="number" value="${p.precio}" min="0" step="1" onchange="updatePrecio('${p.id}',this.value)"></td><td class="num">${fmt(gan)}</td><td><span class="pill ${mcls}">${mar}%</span></td></tr>`;}).join('');
 };
-window.updatePrecio=async(id,val)=>{setSync('loading');const p=products.find(x=>x.id===id);if(p){p.precio=parseFloat(val)||0;await setDoc(doc(db,COL,id),p);setSync('ok');toast('Precio actualizado');}};
+
+window.updatePrecio=async(id,val)=>{setSync('loading');const p=products.find(x=>x.id===id);if(p){p.precio=parseFloat(val)||0;await setDoc(doc(db,COL_PROD,id),p);setSync('ok');toast('Precio actualizado');}};
+
 function fillCatFilter(){const sel=document.getElementById('filter-cat');const cats=[...new Set(products.map(p=>p.cat))].sort();sel.innerHTML='<option value="">Todas</option>'+cats.map(c=>`<option value="${c}">${c}</option>`).join('');}
-window.showView=(v,tab)=>{document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));document.getElementById('view-'+v).classList.add('active');if(tab)tab.classList.add('active');if(v==='dashboard')renderDash();if(v==='inventario'){fillCatFilter();renderInv();}if(v==='precios')renderPrecios();};
+
+window.showView=(v,tab)=>{
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  if(tab)tab.classList.add('active');
+  if(v==='dashboard')renderDash();
+  if(v==='inventario'){fillCatFilter();renderInv();}
+  if(v==='precios')renderPrecios();
+  if(v==='pedidos')renderPedidos();
+};
+
 window.openModal=p=>{editId=p?p.id:null;document.getElementById('modal-title').textContent=p?'Editar producto':'Agregar producto';document.getElementById('f-nombre').value=p?p.nombre:'';document.getElementById('f-cat').value=p?p.cat:'Sensores de movimiento';document.getElementById('f-stock').value=p?p.stock:0;document.getElementById('f-min').value=p?p.min:3;document.getElementById('f-costo').value=p?p.costo:'';document.getElementById('f-precio').value=p?p.precio:'';document.getElementById('f-sku').value=p?p.sku:'';document.getElementById('f-notas').value=p?p.notas:'';document.getElementById('modal').classList.add('open');};
-window.closeModal=()=>document.getElementById('modal').classList.remove('open');
-window.handleOverlayClick=e=>{if(e.target===document.getElementById('modal'))closeModal();};
-window.saveProduct=async()=>{const nombre=document.getElementById('f-nombre').value.trim();if(!nombre){alert('Ingresa el nombre.');return;}setSync('loading');const obj={nombre,cat:document.getElementById('f-cat').value,stock:parseInt(document.getElementById('f-stock').value)||0,min:parseInt(document.getElementById('f-min').value)||1,costo:parseFloat(document.getElementById('f-costo').value)||0,precio:parseFloat(document.getElementById('f-precio').value)||0,sku:document.getElementById('f-sku').value.trim(),notas:document.getElementById('f-notas').value.trim()};if(editId){await setDoc(doc(db,COL,editId),obj);toast('Producto actualizado');}else{await addDoc(collection(db,COL),obj);toast('Producto agregado');}setSync('ok');closeModal();};
+window.closeModal=id=>document.getElementById(id).classList.remove('open');
+window.handleOverlayClick=(e,id)=>{if(e.target===document.getElementById(id))closeModal(id);};
+
+window.saveProduct=async()=>{const nombre=document.getElementById('f-nombre').value.trim();if(!nombre){alert('Ingresa el nombre.');return;}setSync('loading');const obj={nombre,cat:document.getElementById('f-cat').value,stock:parseInt(document.getElementById('f-stock').value)||0,min:parseInt(document.getElementById('f-min').value)||1,costo:parseFloat(document.getElementById('f-costo').value)||0,precio:parseFloat(document.getElementById('f-precio').value)||0,sku:document.getElementById('f-sku').value.trim(),notas:document.getElementById('f-notas').value.trim()};if(editId){await setDoc(doc(db,COL_PROD,editId),obj);toast('Producto actualizado');}else{await addDoc(collection(db,COL_PROD),obj);toast('Producto agregado');}setSync('ok');closeModal('modal');};
 window.editProduct=id=>{const p=products.find(x=>x.id===id);if(p)openModal(p);};
-window.deleteProduct=async id=>{if(!confirm('¿Eliminar?'))return;setSync('loading');await deleteDoc(doc(db,COL,id));setSync('ok');toast('Eliminado');};
+window.deleteProduct=async id=>{if(!confirm('¿Eliminar?'))return;setSync('loading');await deleteDoc(doc(db,COL_PROD,id));setSync('ok');toast('Eliminado');};
+
+// PWA
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;document.getElementById('install-banner').classList.add('show');});
 document.getElementById('btn-install').addEventListener('click',async()=>{if(!deferredPrompt)return;deferredPrompt.prompt();const{outcome}=await deferredPrompt.userChoice;if(outcome==='accepted')toast('¡App instalada!');deferredPrompt=null;document.getElementById('install-banner').classList.remove('show');});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
-async function init(){try{await seedIfEmpty();onSnapshot(collection(db,COL),snap=>{products=snap.docs.map(d=>({id:d.id,...d.data()}));document.getElementById('loading').style.display='none';setSync('ok');renderDash();fillCatFilter();renderInv();});}catch(e){document.getElementById('loading').style.display='none';setSync('error');alert('Error Firebase: '+e.message);}}
+
+// INIT
+async function init(){
+  try{
+    await seedIfEmpty();
+    onSnapshot(collection(db,COL_PROD),snap=>{products=snap.docs.map(d=>({id:d.id,...d.data()}));});
+    onSnapshot(collection(db,COL_PED),snap=>{
+      pedidos=snap.docs.map(d=>({id:d.id,...d.data()}));
+      document.getElementById('loading').style.display='none';
+      setSync('ok');
+      renderDash();fillCatFilter();renderInv();
+      const cur=document.querySelector('.tab.active');
+      if(cur&&cur.textContent.trim()==='Pedidos')renderPedidos();
+    });
+  }catch(e){document.getElementById('loading').style.display='none';setSync('error');alert('Error Firebase: '+e.message);}
+}
 init();
 </script>
 </body>
