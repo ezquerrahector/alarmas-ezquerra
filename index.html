@@ -267,10 +267,11 @@ tr:hover td{background:#fafafa}
   </div>
   <div class="prod-list" id="prod-list"></div>
   <div class="table-wrap"><table><thead><tr>
-    <th style="width:27%">Producto</th><th style="width:13%">Categoría</th>
-    <th class="num" style="width:7%">Stock</th><th class="num" style="width:7%">Mín.</th>
-    <th class="num" style="width:11%">Costo</th><th class="num" style="width:11%">Precio</th>
-    <th style="width:10%">Estado</th><th style="width:14%"></th>
+    <th style="width:25%">Producto</th><th style="width:12%">Categoría</th>
+    <th style="width:9%">Marca</th>
+    <th class="num" style="width:7%">Stock</th><th class="num" style="width:6%">Mín.</th>
+    <th class="num" style="width:10%">Costo</th><th class="num" style="width:10%">Precio</th>
+    <th style="width:9%">Estado</th><th style="width:12%"></th>
   </tr></thead><tbody id="inv-body"></tbody></table></div>
 </div>
 
@@ -683,7 +684,7 @@ window.renderInv=()=>{
   const cat=document.getElementById('filter-cat').value;
   const list=products.filter(p=>(!q||p.nombre.toLowerCase().includes(q)||(p.sku||'').toLowerCase().includes(q)||p.cat.toLowerCase().includes(q))&&(!cat||p.cat===cat));
   document.getElementById('prod-list').innerHTML=list.map(p=>{const st=getSt(p);const marcaCls=p.marca==='Kerui'?'background:#dbeafe;color:#1e40af':p.marca==='Otro'?'background:#f3f4f6;color:#374151':'background:#fef3c7;color:#92400e';return`<div class="prod-card"><div class="prod-card-top"><div><div class="prod-name">${p.nombre}</div><div class="prod-sku">${p.sku}${p.marca?` · <span style="font-size:10px;font-weight:600;padding:1px 6px;border-radius:8px;${marcaCls}">${p.marca}</span>`:''}</div></div><span class="pill ${st.cls}">${st.txt}</span></div><div class="prod-card-grid"><div class="prod-stat"><div class="prod-stat-label">Stock</div><div class="prod-stat-val">${p.stock} uds</div></div><div class="prod-stat"><div class="prod-stat-label">Costo</div><div class="prod-stat-val" style="font-size:12px">${fmt(p.costo)}</div></div><div class="prod-stat"><div class="prod-stat-label">Precio</div><div class="prod-stat-val" style="font-size:12px">${fmt(p.precio)}</div></div></div><div class="prod-card-bottom"><span class="prod-cat">${p.cat}</span><div class="prod-actions"><button class="btn-icon" onclick="editProduct('${p.id}')">✏</button><button class="btn-icon" onclick="deleteProduct('${p.id}')">✕</button></div></div></div>`;}).join('');
-  document.getElementById('inv-body').innerHTML=list.map(p=>{const st=getSt(p);const marcaCls=p.marca==='Kerui'?'background:#dbeafe;color:#1e40af':p.marca==='Otro'?'background:#f3f4f6;color:#374151':'background:#fef3c7;color:#92400e';return`<tr><td title="${p.nombre}">${p.nombre}${p.marca?` <span style="font-size:10px;font-weight:600;padding:1px 5px;border-radius:6px;${marcaCls}">${p.marca}</span>`:''}</td><td>${p.cat}</td><td class="num">${p.stock}</td><td class="num" style="color:#9ca3af">${p.min}</td><td class="num">${fmt(p.costo)}</td><td class="num">${fmt(p.precio)}</td><td><span class="pill ${st.cls}">${st.txt}</span></td><td style="display:flex;gap:5px"><button class="btn-icon" onclick="editProduct('${p.id}')">✏</button><button class="btn-icon" onclick="deleteProduct('${p.id}')">✕</button></td></tr>`;}).join('');
+  document.getElementById('inv-body').innerHTML=list.map(p=>{const st=getSt(p);const marcaCls=p.marca==='Kerui'?'background:#dbeafe;color:#1e40af':p.marca==='Otro'?'background:#f3f4f6;color:#374151':'background:#fef3c7;color:#92400e';const marcaTxt=p.marca||'—';return`<tr><td title="${p.nombre}">${p.nombre}</td><td>${p.cat}</td><td><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px;${marcaCls}">${marcaTxt}</span></td><td class="num">${p.stock}</td><td class="num" style="color:#9ca3af">${p.min}</td><td class="num">${fmt(p.costo)}</td><td class="num">${fmt(p.precio)}</td><td><span class="pill ${st.cls}">${st.txt}</span></td><td style="display:flex;gap:5px"><button class="btn-icon" onclick="editProduct('${p.id}')">✏</button><button class="btn-icon" onclick="deleteProduct('${p.id}')">✕</button></td></tr>`;}).join('');
 };
 
 window.renderPrecios=()=>{
@@ -724,14 +725,22 @@ if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch((
 async function init(){
   try{
     await seedIfEmpty();
-    onSnapshot(collection(db,COL_PROD),snap=>{products=snap.docs.map(d=>({id:d.id,...d.data()}));});
+    let primeraCarga=true;
+    onSnapshot(collection(db,COL_PROD),snap=>{
+      products=snap.docs.map(d=>({id:d.id,...d.data()}));
+      if(primeraCarga){primeraCarga=false;fillCatFilter();renderDash();}
+      const vistaActiva=document.querySelector('.view.active')?.id?.replace('view-','');
+      if(vistaActiva==='inventario'){fillCatFilter();renderInv();}
+      if(vistaActiva==='precios')renderPrecios();
+      if(vistaActiva==='dashboard')renderDash();
+    });
     onSnapshot(collection(db,COL_PED),snap=>{
       pedidos=snap.docs.map(d=>({id:d.id,...d.data()}));
       document.getElementById('loading').style.display='none';
       setSync('ok');
-      renderDash();fillCatFilter();renderInv();
-      const cur=document.querySelector('.tab.active');
-      if(cur&&cur.textContent.trim()==='Pedidos')renderPedidos();
+      const vistaActiva=document.querySelector('.view.active')?.id?.replace('view-','');
+      if(vistaActiva==='pedidos')renderPedidos();
+      if(vistaActiva==='dashboard')renderDash();
     });
   }catch(e){document.getElementById('loading').style.display='none';setSync('error');alert('Error Firebase: '+e.message);}
 }
