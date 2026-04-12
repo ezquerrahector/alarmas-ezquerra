@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alarmas Ezquerra — Inventario</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="favicon.ico">
+<meta name="theme-color" content="#E8293A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="AE Inventario">
+<link rel="apple-touch-icon" href="icons/icon-152x152.png">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f5f7;color:#1a1a2e;min-height:100vh}
+
+.header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#000;border-bottom:2px solid #E8293A;flex-wrap:wrap;gap:10px;position:sticky;top:0;z-index:50}
+.logo{display:flex;align-items:center;gap:10px}
+.logo img{height:36px;object-fit:contain}
+.tabs{display:flex;gap:4px;background:rgba(255,255,255,.1);padding:4px;border-radius:8px}
+.tab{padding:7px 16px;border-radius:6px;border:none;background:transparent;cursor:pointer;font-size:13px;color:rgba(255,255,255,.6);font-family:inherit;transition:all .15s;font-weight:500}
+.tab.active{background:#E8293A;color:#fff}
+.tab:hover:not(.active){color:#fff}
+.sync-status{font-size:12px;color:rgba(255,255,255,.5);display:flex;align-items:center;gap:5px}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:#6b7280}
+.sync-dot.ok{background:#22c55e}
+.sync-dot.loading{background:#f59e0b;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+.view{display:none;padding:20px;max-width:1200px;margin:0 auto}
+.view.active{display:block}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.kpi{background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e5e7eb}
+.kpi-label{font-size:12px;color:#6b7280;margin-bottom:6px}
+.kpi-val{font-size:24px;font-weight:600;color:#1a1a2e}
+.kpi-val.red{color:#E8293A}
+.kpi-val.blue{color:#2E6DA4}
+.kpi-sub{font-size:11px;color:#9ca3af;margin-top:3px}
+
+.alert-box{background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:12px 16px;margin-bottom:18px}
+.alert-box h3{font-size:13px;font-weight:600;color:#991b1b;margin-bottom:8px}
+.alert-item{font-size:12px;color:#7f1d1d;padding:4px 0;border-bottom:1px solid rgba(252,165,165,.3);display:flex;justify-content:space-between;align-items:center}
+.alert-item:last-child{border:none}
+.alert-badge{background:#fca5a5;color:#7f1d1d;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600}
+
+.section-title{font-size:14px;font-weight:600;color:#1a1a2e;margin-bottom:12px}
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px}
+.cat-card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:all .15s}
+.cat-card:hover{border-color:#E8293A;transform:translateY(-2px);box-shadow:0 4px 12px rgba(232,41,58,.1)}
+.cat-icon{font-size:24px;margin-bottom:6px}
+.cat-name{font-size:12px;font-weight:600;color:#1a1a2e}
+.cat-count{font-size:11px;color:#9ca3af;margin-top:2px}
+.cat-stock{font-size:20px;font-weight:600;color:#2E6DA4;margin-top:4px}
+
+.toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.toolbar input,.toolbar select{padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:#1a1a2e;outline:none}
+.toolbar input{flex:1;min-width:180px}
+.toolbar input:focus,.toolbar select:focus{border-color:#E8293A}
+.btn-primary{padding:8px 16px;background:#E8293A;color:#fff;border:none;border-radius:8px;font-size:13px;font-family:inherit;cursor:pointer;font-weight:600;white-space:nowrap;transition:opacity .15s}
+.btn-primary:hover{opacity:.88}
+
+.table-wrap{overflow-x:auto;background:#fff;border-radius:10px;border:1px solid #e5e7eb}
+table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+th{text-align:left;font-size:11px;font-weight:600;color:#6b7280;padding:10px 12px;border-bottom:1px solid #e5e7eb;white-space:nowrap;text-transform:uppercase;letter-spacing:.4px}
+td{padding:10px 12px;border-bottom:1px solid #f3f4f6;color:#1a1a2e;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tr:last-child td{border:none}
+tr:hover td{background:#fafafa}
+.num{text-align:right}
+
+.pill{display:inline-block;font-size:11px;padding:3px 9px;border-radius:10px;font-weight:600}
+.pill-ok{background:#dcfce7;color:#166534}
+.pill-low{background:#fef3c7;color:#92400e}
+.pill-out{background:#fee2e2;color:#991b1b}
+.pill-alta{background:#dcfce7;color:#166534}
+.pill-med{background:#fef3c7;color:#92400e}
+.pill-baja{background:#fee2e2;color:#991b1b}
+
+.inline-input{width:100px;padding:4px 7px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;font-family:inherit;text-align:right;background:#fff;color:#1a1a2e;outline:none}
+.inline-input:focus{border-color:#E8293A}
+
+.btn-icon{padding:5px 9px;background:transparent;border:1px solid #e5e7eb;border-radius:6px;cursor:pointer;font-size:13px;font-family:inherit;color:#6b7280;transition:all .15s}
+.btn-icon:hover{background:#f4f5f7}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:14px;padding:22px;width:min(500px,95vw);max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal h3{font-size:16px;font-weight:600;margin-bottom:18px;color:#1a1a2e}
+.field{margin-bottom:12px}
+.field label{font-size:12px;color:#6b7280;display:block;margin-bottom:4px;font-weight:500}
+.field input,.field select,.field textarea{width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:#1a1a2e;outline:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:#E8293A}
+.field textarea{min-height:60px;resize:vertical}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+.btn-cancel{padding:8px 16px;background:transparent;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;cursor:pointer;color:#6b7280}
+.btn-cancel:hover{background:#f4f5f7}
+
+.loading-screen{position:fixed;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:16px}
+.loading-screen img{width:120px;animation:fadeIn .5s ease}
+.loading-bar{width:200px;height:3px;background:rgba(255,255,255,.15);border-radius:2px;overflow:hidden}
+.loading-bar-inner{height:100%;width:0;background:#E8293A;border-radius:2px;animation:load 1.5s ease forwards}
+@keyframes load{to{width:100%}}
+.loading-screen p{font-size:13px;color:rgba(255,255,255,.5)}
+@keyframes fadeIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+
+.toast{position:fixed;bottom:24px;right:24px;background:#1a1a2e;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:999;opacity:0;transform:translateY(10px);transition:all .25s;pointer-events:none;border-left:3px solid #E8293A}
+.toast.show{opacity:1;transform:translateY(0)}
+
+/* Install banner */
+.install-banner{display:none;background:#000;color:#fff;padding:12px 20px;align-items:center;justify-content:space-between;gap:10px;font-size:13px}
+.install-banner.show{display:flex}
+.btn-install{padding:7px 14px;background:#E8293A;color:#fff;border:none;border-radius:6px;font-size:12px;font-family:inherit;cursor:pointer;font-weight:600}
+</style>
+</head>
+<body>
+
+<div class="loading-screen" id="loading">
+  <img src="icons/icon-192x192.png" alt="Alarmas Ezquerra">
+  <div class="loading-bar"><div class="loading-bar-inner"></div></div>
+  <p>Conectando con Firebase...</p>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="install-banner" id="install-banner">
+  <span>📲 Instala la app en tu celular para acceso rápido</span>
+  <button class="btn-install" id="btn-install">Instalar</button>
+  <button class="btn-cancel" style="border:none;color:rgba(255,255,255,.5);background:transparent;cursor:pointer;font-size:18px" onclick="document.getElementById('install-banner').classList.remove('show')">✕</button>
+</div>
+
+<div class="header">
+  <div class="logo">
+    <img src="icons/icon-96x96.png" alt="Alarmas Ezquerra" style="height:36px">
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="showView('dashboard',this)">Dashboard</button>
+    <button class="tab" onclick="showView('inventario',this)">Inventario</button>
+    <button class="tab" onclick="showView('precios',this)">Costos y precios</button>
+  </div>
+  <div class="sync-status">
+    <div class="sync-dot" id="sync-dot"></div>
+    <span id="sync-label">Conectando...</span>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="view-dashboard" class="view active">
+  <div class="kpi-grid" id="kpi-grid"></div>
+  <div id="dash-alerts"></div>
+  <p class="section-title">Stock por categoría</p>
+  <div class="cat-grid" id="cat-grid"></div>
+</div>
+
+<!-- INVENTARIO -->
+<div id="view-inventario" class="view">
+  <div class="toolbar">
+    <input type="text" id="search" placeholder="Buscar producto, modelo..." oninput="renderInv()">
+    <select id="filter-cat" onchange="renderInv()">
+      <option value="">Todas las categorías</option>
+    </select>
+    <button class="btn-primary" onclick="openModal()">+ Agregar producto</button>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:28%">Producto</th>
+          <th style="width:14%">Categoría</th>
+          <th style="width:7%" class="num">Stock</th>
+          <th style="width:7%" class="num">Mín.</th>
+          <th style="width:11%" class="num">Costo</th>
+          <th style="width:11%" class="num">Precio</th>
+          <th style="width:10%">Estado</th>
+          <th style="width:12%"></th>
+        </tr>
+      </thead>
+      <tbody id="inv-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- COSTOS Y PRECIOS -->
+<div id="view-precios" class="view">
+  <p style="font-size:13px;color:#6b7280;margin-bottom:14px">Edita el precio de venta directamente. El margen se calcula al instante y se guarda en Firebase.</p>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:30%">Producto</th>
+          <th style="width:14%">Categoría</th>
+          <th style="width:12%" class="num">Costo MXN</th>
+          <th style="width:16%" class="num">Precio venta</th>
+          <th style="width:13%" class="num">Ganancia</th>
+          <th style="width:15%">Margen</th>
+        </tr>
+      </thead>
+      <tbody id="precio-body"></tbody>
+    </table>
+  </div>
+  <p style="font-size:12px;color:#9ca3af;margin-top:12px">Verde &gt;40% · Amarillo 20–40% · Rojo &lt;20%</p>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <h3 id="modal-title">Agregar producto</h3>
+    <div class="field"><label>Nombre del producto *</label><input id="f-nombre" type="text" placeholder="Ej: Sensor de movimiento PR200"></div>
+    <div class="field"><label>Categoría</label>
+      <select id="f-cat">
+        <option>Sensores de movimiento</option>
+        <option>Panel de control</option>
+        <option>Sensores de puerta</option>
+        <option>Controles remotos</option>
+        <option>Sensores de vibración</option>
+        <option>Sensores de humo</option>
+        <option>Sensores perimetrales</option>
+        <option>Cámaras NVR</option>
+        <option>Accesorios</option>
+      </select>
+    </div>
+    <div class="two-col">
+      <div class="field"><label>Stock actual (unidades)</label><input id="f-stock" type="number" min="0" value="0"></div>
+      <div class="field"><label>Stock mínimo (alerta)</label><input id="f-min" type="number" min="0" value="3"></div>
+    </div>
+    <div class="two-col">
+      <div class="field"><label>Costo MXN</label><input id="f-costo" type="number" min="0" step="0.01" placeholder="0.00"></div>
+      <div class="field"><label>Precio de venta MXN</label><input id="f-precio" type="number" min="0" step="0.01" placeholder="0.00"></div>
+    </div>
+    <div class="field"><label>Modelo / SKU</label><input id="f-sku" type="text" placeholder="Ej: PR200"></div>
+    <div class="field"><label>Notas (opcional)</label><textarea id="f-notas" placeholder="Especificaciones, proveedor, etc."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-primary" onclick="saveProduct()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore, collection, getDocs, addDoc, setDoc, deleteDoc, doc, onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBEAxj5zECsZEWTFHQtfiAedXLPU9Ht_bw",
+  authDomain: "alarmas-ezquerra-ba683.firebaseapp.com",
+  projectId: "alarmas-ezquerra-ba683",
+  storageBucket: "alarmas-ezquerra-ba683.firebasestorage.app",
+  messagingSenderId: "955381296787",
+  appId: "1:955381296787:web:54c9570167633186bea766"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const COL = "productos";
+
+const INITIAL = [
+  {nombre:'Panel H700-4GE+WIFI',cat:'Panel de control',stock:3,min:2,costo:1355,precio:2499,sku:'H700-4GE+WIFI',notas:'7" IPS, 4G+WiFi, 32h batería, 8 zonas cableadas'},
+  {nombre:'Panel H502-4GE+WIFI',cat:'Panel de control',stock:0,min:2,costo:990,precio:1799,sku:'H502-4GE+WIFI',notas:'4.3" IPS, 4G+WiFi, 12h batería'},
+  {nombre:'Detector de movimiento PR200',cat:'Sensores de movimiento',stock:8,min:5,costo:162,precio:320,sku:'PR200',notas:'433MHz, 110°, AA x2'},
+  {nombre:'Detector de movimiento PR100',cat:'Sensores de movimiento',stock:5,min:5,costo:130,precio:260,sku:'PR100',notas:'433MHz, 110°, AA x2'},
+  {nombre:'Sensor de puerta DS200',cat:'Sensores de puerta',stock:12,min:6,costo:90,precio:180,sku:'DS200',notas:'CR2450x2, 5 años batería'},
+  {nombre:'Sensor de puerta DS100',cat:'Sensores de puerta',stock:6,min:5,costo:63,precio:130,sku:'DS100',notas:'CR2032x1, 433MHz'},
+  {nombre:'Sensor puerta/vibración DS050',cat:'Sensores de puerta',stock:4,min:4,costo:72,precio:145,sku:'DS050',notas:'2 en 1: puerta + vibración'},
+  {nombre:'Control remoto R01',cat:'Controles remotos',stock:10,min:5,costo:45,precio:95,sku:'R01',notas:'CR2032, 433MHz'},
+  {nombre:'Sensor de vibración GB010',cat:'Sensores de vibración',stock:3,min:4,costo:90,precio:185,sku:'GB010',notas:'CR2032, 433MHz'},
+  {nombre:'Detector de humo SK030',cat:'Sensores de humo',stock:6,min:4,costo:135,precio:270,sku:'SK030',notas:'Batería 10 años, 85dB'},
+  {nombre:'Detector de humo SK050',cat:'Sensores de humo',stock:2,min:3,costo:155,precio:310,sku:'SK050',notas:'Batería 10 años, LED+Buzzer'},
+  {nombre:'Sensor persiana SS010',cat:'Sensores perimetrales',stock:4,min:3,costo:108,precio:215,sku:'SS010',notas:'Para cortinas metálicas'},
+  {nombre:'Amplificador de señal EX200',cat:'Accesorios',stock:2,min:2,costo:144,precio:290,sku:'EX200',notas:'433MHz/LoRa, USB-C'},
+  {nombre:'Sirena exterior SecSiren H350',cat:'Accesorios',stock:2,min:2,costo:630,precio:1250,sku:'H350',notas:'120dB, 433MHz, IP65, batería 5000mAh'},
+  {nombre:'Kit NVR 4 canales Kerui',cat:'Cámaras NVR',stock:1,min:2,costo:3800,precio:6500,sku:'NVR-4CH',notas:'NVR + 4 cámaras WiFi'},
+  {nombre:'Alarma Kerui G70 Kit',cat:'Panel de control',stock:3,min:2,costo:1530,precio:2800,sku:'G70-KIT',notas:'Kit completo Kerui G70'},
+];
+
+const CATS = {
+  'Sensores de movimiento':'📡','Panel de control':'🖥️','Sensores de puerta':'🚪',
+  'Controles remotos':'🎮','Sensores de vibración':'📳','Sensores de humo':'🔥',
+  'Sensores perimetrales':'🔭','Cámaras NVR':'📷','Accesorios':'🔧'
+};
+
+let products = [];
+let editId = null;
+
+const fmt = n => '$' + Math.round(n).toLocaleString('es-MX');
+const setSync = s => {
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  if(s==='ok'){dot.className='sync-dot ok';lbl.textContent='Sincronizado';}
+  else if(s==='loading'){dot.className='sync-dot loading';lbl.textContent='Guardando...';}
+  else{dot.className='sync-dot';lbl.textContent='Sin conexión';}
+};
+const toast = msg => {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+};
+
+async function seedIfEmpty() {
+  const snap = await getDocs(collection(db, COL));
+  if(snap.empty) for(const p of INITIAL) await addDoc(collection(db, COL), p);
+}
+
+const getStockStatus = p => {
+  if(p.stock===0) return {cls:'pill-out',txt:'Sin stock'};
+  if(p.stock<=p.min) return {cls:'pill-low',txt:'Stock bajo'};
+  return {cls:'pill-ok',txt:'OK'};
+};
+
+function renderDash() {
+  const total = products.reduce((a,p)=>a+p.stock,0);
+  const valor = products.reduce((a,p)=>a+p.stock*p.costo,0);
+  const sinStock = products.filter(p=>p.stock===0).length;
+  const bajo = products.filter(p=>p.stock>0&&p.stock<=p.min).length;
+  document.getElementById('kpi-grid').innerHTML = `
+    <div class="kpi"><div class="kpi-label">Total productos</div><div class="kpi-val">${products.length}</div></div>
+    <div class="kpi"><div class="kpi-label">Unidades en stock</div><div class="kpi-val blue">${total.toLocaleString('es-MX')}</div></div>
+    <div class="kpi"><div class="kpi-label">Valor del inventario</div><div class="kpi-val">${fmt(valor)}</div><div class="kpi-sub">a precio de costo</div></div>
+    <div class="kpi"><div class="kpi-label">Alertas activas</div><div class="kpi-val red">${sinStock+bajo}</div><div class="kpi-sub">${sinStock} sin stock · ${bajo} bajo mínimo</div></div>
+  `;
+  const alertas = products.filter(p=>p.stock<=p.min);
+  document.getElementById('dash-alerts').innerHTML = alertas.length ? `<div class="alert-box">
+    <h3>⚠ Productos con stock bajo o agotado</h3>
+    ${alertas.map(p=>`<div class="alert-item"><span>${p.nombre} <span style="color:#9ca3af;font-size:11px">(${p.sku})</span></span><span class="alert-badge">${p.stock===0?'Agotado':p.stock+' uds'}</span></div>`).join('')}
+  </div>` : '';
+  const bycat = {};
+  products.forEach(p => {
+    if(!bycat[p.cat]) bycat[p.cat]={count:0,stock:0};
+    bycat[p.cat].count++; bycat[p.cat].stock+=p.stock;
+  });
+  document.getElementById('cat-grid').innerHTML = Object.entries(bycat).map(([cat,d])=>`
+    <div class="cat-card" onclick="filterByCat('${cat}')">
+      <div class="cat-icon">${CATS[cat]||'📦'}</div>
+      <div class="cat-name">${cat}</div>
+      <div class="cat-count">${d.count} productos</div>
+      <div class="cat-stock">${d.stock} uds</div>
+    </div>`).join('');
+}
+
+window.filterByCat = cat => {
+  showView('inventario', document.querySelectorAll('.tab')[1]);
+  document.getElementById('filter-cat').value = cat;
+  renderInv();
+};
+
+window.renderInv = () => {
+  const q = document.getElementById('search').value.toLowerCase();
+  const cat = document.getElementById('filter-cat').value;
+  const list = products.filter(p => {
+    const mq = !q || p.nombre.toLowerCase().includes(q)||(p.sku||'').toLowerCase().includes(q)||p.cat.toLowerCase().includes(q);
+    return mq && (!cat||p.cat===cat);
+  });
+  document.getElementById('inv-body').innerHTML = list.map(p => {
+    const st = getStockStatus(p);
+    return `<tr>
+      <td title="${p.nombre}">${p.nombre}</td>
+      <td title="${p.cat}">${p.cat}</td>
+      <td class="num">${p.stock}</td>
+      <td class="num" style="color:#9ca3af">${p.min}</td>
+      <td class="num">${fmt(p.costo)}</td>
+      <td class="num">${fmt(p.precio)}</td>
+      <td><span class="pill ${st.cls}">${st.txt}</span></td>
+      <td style="display:flex;gap:5px">
+        <button class="btn-icon" onclick="editProduct('${p.id}')">✏</button>
+        <button class="btn-icon" onclick="deleteProduct('${p.id}')">✕</button>
+      </td>
+    </tr>`;
+  }).join('');
+};
+
+window.renderPrecios = () => {
+  document.getElementById('precio-body').innerHTML = products.map(p => {
+    const gan = p.precio - p.costo;
+    const mar = p.costo>0 ? Math.round(gan/p.precio*100) : 0;
+    const mcls = mar>=40?'pill-alta':mar>=20?'pill-med':'pill-baja';
+    return `<tr>
+      <td title="${p.nombre}">${p.nombre}</td>
+      <td>${p.cat}</td>
+      <td class="num">${fmt(p.costo)}</td>
+      <td class="num"><input class="inline-input" type="number" value="${p.precio}" min="0" step="1" onchange="updatePrecio('${p.id}',this.value)"></td>
+      <td class="num">${fmt(gan)}</td>
+      <td><span class="pill ${mcls}">${mar}%</span></td>
+    </tr>`;
+  }).join('');
+};
+
+window.updatePrecio = async (id, val) => {
+  setSync('loading');
+  const p = products.find(x=>x.id===id);
+  if(p){ p.precio=parseFloat(val)||0; await setDoc(doc(db,COL,id),p); setSync('ok'); toast('Precio actualizado'); }
+};
+
+function fillCatFilter() {
+  const sel = document.getElementById('filter-cat');
+  const cats = [...new Set(products.map(p=>p.cat))].sort();
+  sel.innerHTML = '<option value="">Todas las categorías</option>' + cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+}
+
+window.showView = (v, tab) => {
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  if(tab) tab.classList.add('active');
+  if(v==='dashboard') renderDash();
+  if(v==='inventario'){ fillCatFilter(); renderInv(); }
+  if(v==='precios') renderPrecios();
+};
+
+window.openModal = p => {
+  editId = p ? p.id : null;
+  document.getElementById('modal-title').textContent = p ? 'Editar producto' : 'Agregar producto';
+  document.getElementById('f-nombre').value = p?p.nombre:'';
+  document.getElementById('f-cat').value = p?p.cat:'Sensores de movimiento';
+  document.getElementById('f-stock').value = p?p.stock:0;
+  document.getElementById('f-min').value = p?p.min:3;
+  document.getElementById('f-costo').value = p?p.costo:'';
+  document.getElementById('f-precio').value = p?p.precio:'';
+  document.getElementById('f-sku').value = p?p.sku:'';
+  document.getElementById('f-notas').value = p?p.notas:'';
+  document.getElementById('modal').classList.add('open');
+};
+window.closeModal = () => document.getElementById('modal').classList.remove('open');
+window.handleOverlayClick = e => { if(e.target===document.getElementById('modal')) closeModal(); };
+
+window.saveProduct = async () => {
+  const nombre = document.getElementById('f-nombre').value.trim();
+  if(!nombre){ alert('Ingresa el nombre del producto.'); return; }
+  setSync('loading');
+  const obj = {
+    nombre,
+    cat: document.getElementById('f-cat').value,
+    stock: parseInt(document.getElementById('f-stock').value)||0,
+    min: parseInt(document.getElementById('f-min').value)||1,
+    costo: parseFloat(document.getElementById('f-costo').value)||0,
+    precio: parseFloat(document.getElementById('f-precio').value)||0,
+    sku: document.getElementById('f-sku').value.trim(),
+    notas: document.getElementById('f-notas').value.trim(),
+  };
+  if(editId){ await setDoc(doc(db,COL,editId),obj); toast('Producto actualizado'); }
+  else { await addDoc(collection(db,COL),obj); toast('Producto agregado'); }
+  setSync('ok'); closeModal();
+};
+
+window.editProduct = id => { const p=products.find(x=>x.id===id); if(p) openModal(p); };
+window.deleteProduct = async id => {
+  if(!confirm('¿Eliminar este producto?')) return;
+  setSync('loading');
+  await deleteDoc(doc(db,COL,id));
+  setSync('ok'); toast('Producto eliminado');
+};
+
+// PWA install prompt
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('install-banner').classList.add('show');
+});
+document.getElementById('btn-install').addEventListener('click', async () => {
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  if(outcome==='accepted') toast('¡App instalada!');
+  deferredPrompt = null;
+  document.getElementById('install-banner').classList.remove('show');
+});
+
+// Service Worker
+if('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+
+// Init
+async function init() {
+  try {
+    await seedIfEmpty();
+    onSnapshot(collection(db, COL), snap => {
+      products = snap.docs.map(d=>({id:d.id,...d.data()}));
+      document.getElementById('loading').style.display = 'none';
+      setSync('ok');
+      renderDash(); fillCatFilter(); renderInv();
+    });
+  } catch(e) {
+    document.getElementById('loading').style.display = 'none';
+    setSync('error');
+    alert('Error conectando con Firebase: ' + e.message);
+  }
+}
+init();
+</script>
+</body>
+</html>
