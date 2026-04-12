@@ -457,7 +457,7 @@ window.renderPedidos=()=>{
         </div>
         <span class="pill ${STATUS_CLS[p.status]||'s-pendiente'}">${p.status}</span>
       </div>
-      ${p.items?.length?`<div class="pedido-items">${p.items.map(i=>`<div class="pedido-item-row"><span>${i.nombre} ×${i.qty}</span><span>${fmt(i.precio*i.qty)}</span></div>`).join('')}<div class="pedido-total" style="margin-top:6px;text-align:right">Total: ${fmt(tot)}</div></div>`:''}
+      ${p.items?.length?`<div class="pedido-items">${p.items.map(i=>{const prod=products.find(x=>x.id===i.prodId);const marca=prod?.marca||i.marca||'';const marcaCls=marca==='Kerui'?'color:#1e40af':marca==='Otro'?'color:#6b7280':'color:#92400e';return`<div class="pedido-item-row"><span>${i.nombre} ×${i.qty}${marca?` <span style="font-size:10px;font-weight:600;${marcaCls}">(${marca})</span>`:''}</span><span>${fmt(i.precio*i.qty)}</span></div>`;}).join('')}<div class="pedido-total" style="margin-top:6px;text-align:right">Total: ${fmt(tot)}</div></div>`:''}
       ${p.notas?`<div style="font-size:12px;color:#6b7280;margin-top:6px;padding:6px 8px;background:#f8f9fa;border-radius:6px">${p.notas}</div>`:''}
       <div class="pedido-footer">
         <div class="pedido-actions">
@@ -653,7 +653,7 @@ window.savePedido=async()=>{
     const inputs=row.querySelectorAll('input');
     const qty=parseInt(inputs[0].value)||1;
     const precio=parseFloat(inputs[1].value)||0;
-    if(prodId&&nombre)items.push({prodId,nombre,qty,precio});
+    if(prodId&&nombre)items.push({prodId,nombre,marca:prod?.marca||'',qty,precio});
   });
   if(!items.length){alert('Selecciona al menos un producto.');return;}
   setSync('loading');
