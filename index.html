@@ -38,7 +38,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
 @media(min-width:600px){.kpi-grid{grid-template-columns:repeat(3,1fr)}}
 @media(min-width:900px){.kpi-grid{grid-template-columns:repeat(4,1fr)}}
-.kpi{background:#fff;border-radius:10px;padding:12px 14px;border:1px solid #e5e7eb}
+.kpi{background:#fff;border-radius:10px;padding:12px 14px;border:1px solid #e5e7eb;transition:border-color .15s,box-shadow .15s}
+.kpi:hover{border-color:#E8293A;box-shadow:0 2px 8px rgba(232,41,58,.08)}
 .kpi-label{font-size:11px;color:#6b7280;margin-bottom:4px}
 .kpi-val{font-size:20px;font-weight:600;color:#1a1a2e}
 .kpi-val.red{color:#E8293A}.kpi-val.blue{color:#2E6DA4}.kpi-val.green{color:#16a34a}
@@ -199,7 +200,23 @@ tr:hover td{background:#fafafa}
 .btn-wa-copy{padding:8px 14px;background:#1a1a2e;color:#fff;border:none;border-radius:8px;font-size:13px;font-family:inherit;cursor:pointer;font-weight:600}
 .btn-wa-send{padding:8px 14px;background:#25d366;color:#fff;border:none;border-radius:8px;font-size:13px;font-family:inherit;cursor:pointer;font-weight:600}
 
-/* LOADING / TOAST */
+/* CONFIG */
+.config-section{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px 18px;margin-bottom:12px}
+.config-section h3{font-size:14px;font-weight:600;color:#1a1a2e;margin-bottom:4px}
+.config-section p{font-size:12px;color:#6b7280;margin-bottom:12px;line-height:1.5}
+.config-btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn-cfg{padding:8px 14px;border-radius:8px;border:1px solid #d1d5db;background:#fff;cursor:pointer;font-size:12px;font-family:inherit;color:#1a1a2e;font-weight:500;transition:all .15s;display:flex;align-items:center;gap:5px}
+.btn-cfg:hover{background:#f4f5f7;border-color:#9ca3af}
+.btn-cfg.red{background:#E8293A;color:#fff;border-color:#E8293A}
+.btn-cfg.red:hover{opacity:.88}
+.btn-cfg.green{background:#16a34a;color:#fff;border-color:#16a34a}
+.btn-cfg.green:hover{opacity:.88}
+.btn-cfg.dark{background:#1a1a2e;color:#fff;border-color:#1a1a2e}
+.btn-cfg.dark:hover{opacity:.88}
+.cfg-input{width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:#1a1a2e;outline:none;margin-bottom:8px}
+.cfg-input:focus{border-color:#E8293A}
+.reporte-modal{background:#fff;border-radius:14px;padding:18px;width:min(520px,96vw);max-height:88vh;overflow-y:auto}
+.reporte-content{background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:14px;font-size:13px;line-height:1.7;white-space:pre-wrap;font-family:inherit;margin-bottom:12px;color:#1a1a2e}
 .loading-screen{position:fixed;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:14px}
 .loading-screen img{width:90px}
 .loading-bar{width:160px;height:3px;background:rgba(255,255,255,.15);border-radius:2px;overflow:hidden}
@@ -234,6 +251,7 @@ tr:hover td{background:#fafafa}
     <button class="tab" onclick="showView('pedidos',this)">Pedidos</button>
     <button class="tab" onclick="showView('inventario',this)">Inventario</button>
     <button class="tab" onclick="showView('precios',this)">Precios</button>
+    <button class="tab" onclick="showView('config',this)">⚙ Config</button>
   </div>
   <div style="display:flex;align-items:center;gap:10px">
     <button class="btn-header-pedido" onclick="openPedidoModal()">+ Pedido</button>
@@ -288,7 +306,73 @@ tr:hover td{background:#fafafa}
   <p style="font-size:11px;color:#9ca3af;margin-top:10px">Verde &gt;40% · Amarillo 20–40% · Rojo &lt;20%</p>
 </div>
 
-<!-- MODAL INVENTARIO -->
+<!-- CONFIG -->
+<div id="view-config" class="view">
+
+  <div class="config-section">
+    <h3>📧 Notificaciones por correo (EmailJS)</h3>
+    <p>Se enviará un correo a tu dirección al crear un pedido o cambiar su estatus. Necesitas configurar EmailJS con tu cuenta gratuita en <a href="https://emailjs.com" target="_blank" style="color:#E8293A">emailjs.com</a>.</p>
+    <input class="cfg-input" id="cfg-email-dest" type="email" placeholder="Tu correo destino (ej: hectorezquerra@hotmail.com)">
+    <input class="cfg-input" id="cfg-ejs-service" type="text" placeholder="EmailJS Service ID (ej: service_abc123)">
+    <input class="cfg-input" id="cfg-ejs-template" type="text" placeholder="EmailJS Template ID (ej: template_abc123)">
+    <input class="cfg-input" id="cfg-ejs-pubkey" type="text" placeholder="EmailJS Public Key">
+    <div class="config-btns">
+      <button class="btn-cfg dark" onclick="guardarEmailConfig()">💾 Guardar configuración</button>
+      <button class="btn-cfg" onclick="enviarCorreoPrueba()">✉ Enviar correo de prueba</button>
+    </div>
+    <p id="email-status" style="margin-top:8px;margin-bottom:0;font-size:12px"></p>
+  </div>
+
+  <div class="config-section">
+    <h3>📋 Reporte de existencia</h3>
+    <p>Genera un mensaje con todos los productos disponibles para compartir por WhatsApp con clientes o vendedores.</p>
+    <div class="config-btns">
+      <button class="btn-cfg green" onclick="verReporte()">📋 Ver reporte de existencia</button>
+    </div>
+  </div>
+
+  <div class="config-section">
+    <h3>📥 Exportar datos</h3>
+    <p>Descarga tus datos en formato CSV o un backup completo en JSON.</p>
+    <div class="config-btns">
+      <button class="btn-cfg" onclick="exportCSV('pedidos')">📦 Pedidos CSV</button>
+      <button class="btn-cfg" onclick="exportCSV('inventario')">📦 Inventario CSV</button>
+      <button class="btn-cfg red" onclick="exportBackup()">💾 Backup completo JSON</button>
+    </div>
+  </div>
+
+  <div class="config-section">
+    <h3>📤 Importar / Restaurar</h3>
+    <p>Restaura todos tus datos desde un archivo JSON de backup. <strong>Esto reemplaza todos los datos actuales.</strong></p>
+    <div class="config-btns">
+      <button class="btn-cfg" onclick="document.getElementById('import-file').click()">⚠ Restaurar desde JSON</button>
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importarBackup(this)">
+    </div>
+  </div>
+
+  <div class="config-section" style="border-color:#fca5a5">
+    <h3 style="color:#991b1b">🗑 Zona peligrosa</h3>
+    <p>Estas acciones son irreversibles. Úsalas con cuidado.</p>
+    <div class="config-btns">
+      <button class="btn-cfg" style="border-color:#fca5a5;color:#991b1b" onclick="limpiarPedidos()">Limpiar pedidos</button>
+      <button class="btn-cfg" style="border-color:#fca5a5;color:#991b1b" onclick="limpiarInventario()">Resetear stock a 0</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL REPORTE -->
+<div class="modal-overlay" id="modal-reporte" onclick="handleOverlayClick(event,'modal-reporte')">
+  <div class="reporte-modal">
+    <h3 style="font-size:15px;font-weight:600;margin-bottom:12px">Reporte de existencia</h3>
+    <div class="reporte-content" id="reporte-content"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn-cfg dark" onclick="copiarReporte()">📋 Copiar</button>
+      <button class="btn-cfg green" onclick="enviarReporteWA()">💬 Enviar por WhatsApp</button>
+      <button class="btn-cancel" onclick="closeModal('modal-reporte')" style="padding:8px 14px;background:transparent;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;cursor:pointer;color:#6b7280">Cerrar</button>
+    </div>
+  </div>
+</div>
 <div class="modal-overlay" id="modal" onclick="handleOverlayClick(event,'modal')">
   <div class="modal">
     <h3 id="modal-title">Agregar producto</h3>
@@ -426,17 +510,17 @@ function renderDash(){
   const pedMes=pedidos.filter(p=>{const d=p.fecha?.toDate?p.fecha.toDate():new Date(p.fecha||0);const n=new Date();return d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();}).length;
 
   document.getElementById('kpi-grid').innerHTML=`
-    <div class="kpi"><div class="kpi-label">Pedidos totales</div><div class="kpi-val">${pedTotal}</div></div>
-    <div class="kpi"><div class="kpi-label">Instalados / Cobrados</div><div class="kpi-val green">${pedCobrados.length}</div></div>
-    <div class="kpi"><div class="kpi-label">Pedidos activos</div><div class="kpi-val blue">${pedActivos}</div><div class="kpi-sub">pendiente/cotizado/confirmado</div></div>
-    <div class="kpi"><div class="kpi-label">Pedidos este mes</div><div class="kpi-val">${pedMes}</div></div>
-    <div class="kpi"><div class="kpi-label">Ventas totales</div><div class="kpi-val green" style="font-size:17px">${fmt(ventasTot)}</div><div class="kpi-sub">pedidos cobrados/instalados</div></div>
-    <div class="kpi"><div class="kpi-label">Ganancia total</div><div class="kpi-val green" style="font-size:17px">${fmt(gananciaTot)}</div></div>
-    <div class="kpi"><div class="kpi-label">Margen promedio</div><div class="kpi-val ${margenProm>=40?'green':margenProm>=20?'':'red'}" style="${margenProm>=20&&margenProm<40?'color:#92400e':''}">${margenProm}%</div></div>
-    <div class="kpi"><div class="kpi-label">Alertas stock</div><div class="kpi-val red">${sin+baj}</div><div class="kpi-sub">${sin} agotado · ${baj} bajo mínimo</div></div>
-    <div class="kpi"><div class="kpi-label">Productos</div><div class="kpi-val">${products.length}</div></div>
-    <div class="kpi"><div class="kpi-label">Unidades en stock</div><div class="kpi-val blue">${tot}</div></div>
-    <div class="kpi"><div class="kpi-label">Valor inventario</div><div class="kpi-val" style="font-size:15px">${fmt(val)}</div><div class="kpi-sub">a precio costo</div></div>
+    <div class="kpi" style="cursor:pointer" onclick="showView('pedidos',document.querySelectorAll('.tab')[1])"><div class="kpi-label">Pedidos totales ↗</div><div class="kpi-val">${pedTotal}</div></div>
+    <div class="kpi" style="cursor:pointer" onclick="showView('pedidos',document.querySelectorAll('.tab')[1]);setPedidoFilter('Cobrado')"><div class="kpi-label">Instalados / Cobrados ↗</div><div class="kpi-val green">${pedCobrados.length}</div></div>
+    <div class="kpi" style="cursor:pointer" onclick="showView('pedidos',document.querySelectorAll('.tab')[1]);setPedidoFilter('Pendiente')"><div class="kpi-label">Pedidos activos ↗</div><div class="kpi-val blue">${pedActivos}</div><div class="kpi-sub">pendiente/cotizado/confirmado</div></div>
+    <div class="kpi" style="cursor:pointer" onclick="showView('pedidos',document.querySelectorAll('.tab')[1])"><div class="kpi-label">Pedidos este mes ↗</div><div class="kpi-val">${pedMes}</div></div>
+    <div class="kpi" style="cursor:pointer" onclick="showView('pedidos',document.querySelectorAll('.tab')[1]);setPedidoFilter('Cobrado')"><div class="kpi-label">Ventas totales ↗</div><div class="kpi-val green" style="font-size:17px">${fmt(ventasTot)}</div><div class="kpi-sub">pedidos cobrados/instalados</div></div>
+    <div class="kpi" style="cursor:pointer" onclick="showView('precios',document.querySelectorAll('.tab')[3])"><div class="kpi-label">Ganancia total ↗</div><div class="kpi-val green" style="font-size:17px">${fmt(gananciaTot)}</div></div>
+    <div class="kpi" style="cursor:pointer" onclick="showView('precios',document.querySelectorAll('.tab')[3])"><div class="kpi-label">Margen promedio ↗</div><div class="kpi-val ${margenProm>=40?'green':margenProm>=20?'':'red'}" style="${margenProm>=20&&margenProm<40?'color:#92400e':''}">${margenProm}%</div></div>
+    <div class="kpi" style="cursor:pointer" onclick="showView('inventario',document.querySelectorAll('.tab')[2])"><div class="kpi-label">Alertas stock ↗</div><div class="kpi-val red">${sin+baj}</div><div class="kpi-sub">${sin} agotado · ${baj} bajo mínimo</div></div>
+    <div class="kpi" style="cursor:pointer" onclick="showView('inventario',document.querySelectorAll('.tab')[2])"><div class="kpi-label">Productos ↗</div><div class="kpi-val">${products.length}</div></div>
+    <div class="kpi" style="cursor:pointer" onclick="showView('inventario',document.querySelectorAll('.tab')[2])"><div class="kpi-label">Unidades en stock ↗</div><div class="kpi-val blue">${tot}</div></div>
+    <div class="kpi" style="cursor:pointer" onclick="showView('inventario',document.querySelectorAll('.tab')[2])"><div class="kpi-label">Valor inventario ↗</div><div class="kpi-val" style="font-size:15px">${fmt(val)}</div><div class="kpi-sub">a precio costo</div></div>
   `;
 
   const al=products.filter(p=>p.stock<=p.min);
@@ -549,9 +633,11 @@ window.avanzarStatus=async(id,nextS)=>{
     batch.update(doc(db,COL_PED,id),{status:nextS});
     await batch.commit();
     toast(`Pedido confirmado — stock descontado`);
+    notificarPedido(`✅ Pedido Confirmado`,{...p,status:nextS});
   } else {
     await setDoc(doc(db,COL_PED,id),{...p,status:nextS});
     toast(`Estatus → ${nextS}`);
+    notificarPedido(`🔄 Estatus: ${nextS}`,{...p,status:nextS});
   }
   setSync('ok');
 };
@@ -719,10 +805,14 @@ window.savePedido=async()=>{
     fecha:editPedidoId?(pedidos.find(x=>x.id===editPedidoId)?.fecha||new Date()):new Date(),
   };
   if(editPedidoId){
-    await setDoc(doc(db,COL_PED,editPedidoId),obj);toast('Pedido actualizado');
+    await setDoc(doc(db,COL_PED,editPedidoId),obj);
+    toast('Pedido actualizado');
+    notificarPedido('✏ Pedido actualizado',obj);
   } else {
     obj.num=pedidos.length+1;obj.fecha=new Date();
-    await addDoc(collection(db,COL_PED),obj);toast('Pedido creado');
+    const ref=await addDoc(collection(db,COL_PED),obj);
+    toast('Pedido creado');
+    notificarPedido('🆕 Nuevo pedido',{...obj,id:ref.id});
   }
   setSync('ok');closeModal('modal-pedido');
 };
@@ -759,6 +849,7 @@ window.showView=(v,tab)=>{
   if(v==='inventario'){fillCatFilter();renderInv();}
   if(v==='precios')renderPrecios();
   if(v==='pedidos')renderPedidos();
+  if(v==='config')cargarEmailConfig();
 };
 
 window.openModal=p=>{editId=p?p.id:null;document.getElementById('modal-title').textContent=p?'Editar producto':'Agregar producto';document.getElementById('f-nombre').value=p?p.nombre:'';document.getElementById('f-cat').value=p?p.cat:'Sensores de movimiento';document.getElementById('f-marca').value=p?p.marca||'Staniot':'Staniot';document.getElementById('f-stock').value=p?p.stock:0;document.getElementById('f-min').value=p?p.min:3;document.getElementById('f-costo').value=p?p.costo:'';document.getElementById('f-precio').value=p?p.precio:'';document.getElementById('f-sku').value=p?p.sku:'';document.getElementById('f-notas').value=p?p.notas:'';document.getElementById('modal').classList.add('open');};
@@ -768,6 +859,131 @@ window.handleOverlayClick=(e,id)=>{if(e.target===document.getElementById(id))clo
 window.saveProduct=async()=>{const nombre=document.getElementById('f-nombre').value.trim();if(!nombre){alert('Ingresa el nombre.');return;}setSync('loading');const obj={nombre,cat:document.getElementById('f-cat').value,marca:document.getElementById('f-marca').value,stock:parseInt(document.getElementById('f-stock').value)||0,min:parseInt(document.getElementById('f-min').value)||1,costo:parseFloat(document.getElementById('f-costo').value)||0,precio:parseFloat(document.getElementById('f-precio').value)||0,sku:document.getElementById('f-sku').value.trim(),notas:document.getElementById('f-notas').value.trim()};if(editId){await setDoc(doc(db,COL_PROD,editId),obj);toast('Producto actualizado');}else{await addDoc(collection(db,COL_PROD),obj);toast('Producto agregado');}setSync('ok');closeModal('modal');};
 window.editProduct=id=>{const p=products.find(x=>x.id===id);if(p)openModal(p);};
 window.deleteProduct=async id=>{if(!confirm('¿Eliminar?'))return;setSync('loading');await deleteDoc(doc(db,COL_PROD,id));setSync('ok');toast('Eliminado');};
+
+/* ===== CONFIG ===== */
+function cargarEmailConfig(){
+  try{
+    const cfg=JSON.parse(localStorage.getItem('ae_email_cfg')||'{}');
+    if(cfg.dest)document.getElementById('cfg-email-dest').value=cfg.dest;
+    if(cfg.service)document.getElementById('cfg-ejs-service').value=cfg.service;
+    if(cfg.template)document.getElementById('cfg-ejs-template').value=cfg.template;
+    if(cfg.pubkey)document.getElementById('cfg-ejs-pubkey').value=cfg.pubkey;
+  }catch(e){}
+}
+window.guardarEmailConfig=()=>{
+  const cfg={dest:document.getElementById('cfg-email-dest').value.trim(),service:document.getElementById('cfg-ejs-service').value.trim(),template:document.getElementById('cfg-ejs-template').value.trim(),pubkey:document.getElementById('cfg-ejs-pubkey').value.trim()};
+  localStorage.setItem('ae_email_cfg',JSON.stringify(cfg));
+  document.getElementById('email-status').innerHTML='<span style="color:#16a34a">✓ Configuración guardada</span>';
+  toast('Configuración de correo guardada');
+};
+function getEmailCfg(){try{return JSON.parse(localStorage.getItem('ae_email_cfg')||'{}');}catch(e){return{};}}
+async function enviarCorreoEmailJS(asunto,cuerpo){
+  const cfg=getEmailCfg();
+  if(!cfg.service||!cfg.template||!cfg.pubkey||!cfg.dest){return;}
+  try{
+    await fetch(`https://api.emailjs.com/api/v1.0/email/send`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({service_id:cfg.service,template_id:cfg.template,user_id:cfg.pubkey,template_params:{to_email:cfg.dest,subject:asunto,message:cuerpo,from_name:'Alarmas Ezquerra'}})
+    });
+  }catch(e){console.log('EmailJS error:',e);}
+}
+window.enviarCorreoPrueba=async()=>{
+  const cfg=getEmailCfg();
+  if(!cfg.service||!cfg.pubkey){alert('Primero guarda tu configuración de EmailJS.');return;}
+  document.getElementById('email-status').innerHTML='<span style="color:#92400e">Enviando...</span>';
+  await enviarCorreoEmailJS('🔒 Prueba — Alarmas Ezquerra','Este es un correo de prueba del sistema de Alarmas Ezquerra. Si lo recibes, la configuración es correcta.');
+  document.getElementById('email-status').innerHTML='<span style="color:#16a34a">✓ Correo de prueba enviado</span>';
+  toast('Correo de prueba enviado');
+};
+
+window.verReporte=()=>{
+  const disponibles=products.filter(p=>p.stock>0).sort((a,b)=>a.cat.localeCompare(b.cat));
+  if(!disponibles.length){alert('No hay productos con stock disponible.');return;}
+  const fecha=new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'});
+  let msg=`🔒 *ALARMAS EZQUERRA*\nExistencia disponible — ${fecha}\n`;
+  const porCat={};
+  disponibles.forEach(p=>{if(!porCat[p.cat])porCat[p.cat]=[];porCat[p.cat].push(p);});
+  Object.entries(porCat).forEach(([cat,prods])=>{
+    msg+=`\n*${cat}*\n`;
+    prods.forEach(p=>{msg+=`  • ${p.nombre} — ${fmt(p.precio)} (${p.stock} uds)\n`;});
+  });
+  msg+=`\n📞 WhatsApp: 477 700 0872`;
+  document.getElementById('reporte-content').textContent=msg;
+  document.getElementById('modal-reporte').classList.add('open');
+};
+window.copiarReporte=()=>{navigator.clipboard.writeText(document.getElementById('reporte-content').textContent);toast('Reporte copiado');};
+window.enviarReporteWA=()=>{const msg=document.getElementById('reporte-content').textContent;window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`,'_blank');};
+
+window.exportCSV=tipo=>{
+  let csv='',nombre='';
+  if(tipo==='pedidos'){
+    csv='Num,Cliente,Teléfono,Dirección,Estatus,Fecha,Productos,Total\n';
+    pedidos.forEach(p=>{const tot=pedidoTotal(p.items||[]);const prods=(p.items||[]).map(i=>`${i.nombre}x${i.qty}`).join(' | ');const fecha=fmtDate(p.fecha);csv+=`${p.num||''},"${p.cliente}","${p.tel||''}","${p.dir||''}","${p.status}","${fecha}","${prods}",${tot}\n`;});
+    nombre='pedidos_alarmas_ezquerra.csv';
+  } else {
+    csv='Nombre,Categoría,Marca,SKU,Stock,Mínimo,Costo,Precio,Notas\n';
+    products.forEach(p=>{csv+=`"${p.nombre}","${p.cat}","${p.marca||''}","${p.sku||''}",${p.stock},${p.min},${p.costo},${p.precio},"${p.notas||''}"\n`;});
+    nombre='inventario_alarmas_ezquerra.csv';
+  }
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nombre;a.click();
+  toast(`${tipo==='pedidos'?'Pedidos':'Inventario'} exportado`);
+};
+
+window.exportBackup=()=>{
+  const data={pedidos,productos:products,fecha:new Date().toISOString(),version:'1.0'};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`backup_alarmas_ezquerra_${new Date().toISOString().slice(0,10)}.json`;a.click();
+  toast('Backup descargado');
+};
+
+window.importarBackup=async file=>{
+  if(!file.files[0])return;
+  if(!confirm('¿Restaurar backup? Esto reemplazará todos los datos actuales.'))return;
+  try{
+    const text=await file.files[0].text();
+    const data=JSON.parse(text);
+    setSync('loading');
+    const batch1=writeBatch(db);
+    const snap1=await getDocs(collection(db,COL_PROD));
+    snap1.docs.forEach(d=>batch1.delete(d.ref));
+    await batch1.commit();
+    for(const p of(data.productos||[]))await addDoc(collection(db,COL_PROD),p);
+    const batch2=writeBatch(db);
+    const snap2=await getDocs(collection(db,COL_PED));
+    snap2.docs.forEach(d=>batch2.delete(d.ref));
+    await batch2.commit();
+    for(const p of(data.pedidos||[]))await addDoc(collection(db,COL_PED),p);
+    setSync('ok');toast('Backup restaurado correctamente');
+  }catch(e){setSync('ok');alert('Error al restaurar: '+e.message);}
+  file.value='';
+};
+
+window.limpiarPedidos=async()=>{
+  if(!confirm('¿Eliminar TODOS los pedidos? Esta acción es irreversible.'))return;
+  setSync('loading');
+  const snap=await getDocs(collection(db,COL_PED));
+  const batch=writeBatch(db);snap.docs.forEach(d=>batch.delete(d.ref));
+  await batch.commit();setSync('ok');toast('Pedidos eliminados');
+};
+window.limpiarInventario=async()=>{
+  if(!confirm('¿Resetear el stock de todos los productos a 0?'))return;
+  setSync('loading');
+  const batch=writeBatch(db);
+  products.forEach(p=>batch.update(doc(db,COL_PROD,p.id),{stock:0}));
+  await batch.commit();setSync('ok');toast('Stock reseteado a 0');
+};
+
+// Enviar correo al crear/cambiar pedido
+async function notificarPedido(accion,pedido){
+  const cfg=getEmailCfg();if(!cfg.dest||!cfg.service)return;
+  const items=(pedido.items||[]).map(i=>`• ${i.nombre} x${i.qty} — ${fmt(i.precio*i.qty)}`).join('\n');
+  const asunto=`${accion} — Pedido #${pedido.num||'?'} (${pedido.cliente})`;
+  const cuerpo=`${accion}\n\nCliente: ${pedido.cliente}\nTel: ${pedido.tel||'—'}\nDirección: ${pedido.dir||'—'}\nEstatus: ${pedido.status}\n\nProductos:\n${items}\n\nTotal: ${fmt(pedidoTotal(pedido.items||[]))}`;
+  await enviarCorreoEmailJS(asunto,cuerpo);
+}
+
+/* ===== FIN CONFIG ===== */
 
 // PWA
 let deferredPrompt;
