@@ -301,7 +301,7 @@ th.sort-desc::after{content:' ▼';opacity:1;color:#E8293A}
 <div id="view-dashboard" class="view active">
   <div class="kpi-grid" id="kpi-grid"></div>
   <div id="dash-alerts"></div>
-  <p class="section-title">Stock por categoría</p>
+  
   <div class="cat-grid" id="cat-grid"></div>
 </div>
 
@@ -383,17 +383,16 @@ th.sort-desc::after{content:' ▼';opacity:1;color:#E8293A}
       <div class="field"><label>Teléfono</label><input id="s-tel" type="tel" placeholder="477 000 0000"></div>
     </div>
     <div class="field"><label>Dirección</label><input id="s-dir" type="text" placeholder="Calle, colonia, ciudad"></div>
-    <div class="field"><label>Tipo de servicio *</label>
-      <select id="s-tipo">
-        <option value="">— Selecciona —</option>
-        <option>Administración de sistema (chip)</option>
-        <option>Cambio de baterías</option>
-        <option>Monitoreo remoto</option>
-        <option>Mantenimiento preventivo</option>
-        <option>Instalación</option>
-        <option>Ampliación de zonas</option>
-        <option>Otro</option>
-      </select>
+    <div class="field"><label>Tipos de servicio * <span style="font-size:11px;color:#9ca3af">(selecciona todos los que apliquen)</span></label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px" id="s-tipos-grid">
+        <label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;padding:7px 10px;border:1px solid #e5e7eb;border-radius:7px;background:#fff"><input type="checkbox" value="Administración de sistema (chip)" style="width:15px;height:15px;accent-color:#E8293A"> Administración de sistema (chip)</label>
+        <label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;padding:7px 10px;border:1px solid #e5e7eb;border-radius:7px;background:#fff"><input type="checkbox" value="Cambio de baterías" style="width:15px;height:15px;accent-color:#E8293A"> Cambio de baterías</label>
+        <label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;padding:7px 10px;border:1px solid #e5e7eb;border-radius:7px;background:#fff"><input type="checkbox" value="Monitoreo remoto" style="width:15px;height:15px;accent-color:#E8293A"> Monitoreo remoto</label>
+        <label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;padding:7px 10px;border:1px solid #e5e7eb;border-radius:7px;background:#fff"><input type="checkbox" value="Mantenimiento preventivo" style="width:15px;height:15px;accent-color:#E8293A"> Mantenimiento preventivo</label>
+        <label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;padding:7px 10px;border:1px solid #e5e7eb;border-radius:7px;background:#fff"><input type="checkbox" value="Instalación" style="width:15px;height:15px;accent-color:#E8293A"> Instalación</label>
+        <label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;padding:7px 10px;border:1px solid #e5e7eb;border-radius:7px;background:#fff"><input type="checkbox" value="Ampliación de zonas" style="width:15px;height:15px;accent-color:#E8293A"> Ampliación de zonas</label>
+        <label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;padding:7px 10px;border:1px solid #e5e7eb;border-radius:7px;background:#fff"><input type="checkbox" value="Otro" style="width:15px;height:15px;accent-color:#E8293A"> Otro</label>
+      </div>
     </div>
     <div class="two-col">
       <div class="field"><label>Monto MXN *</label><input id="s-monto" type="number" min="0" step="1" placeholder="0.00"></div>
@@ -1552,7 +1551,7 @@ window.renderServicios=()=>{
       <div class="serv-card-top">
         <div>
           <div class="serv-cliente">${s.cliente}${s.tel?`<span style="font-weight:400;font-size:12px;color:#9ca3af"> · ${s.tel}</span>`:''}</div>
-          <div class="serv-tipo">🔧 ${s.tipo} · ${FREC_LABEL[s.frecuencia]||s.frecuencia}</div>
+          <div class="serv-tipo">${(Array.isArray(s.tipos)?s.tipos:[s.tipo||'—']).map(t=>`<span style="display:inline-block;background:#f3f4f6;border-radius:6px;padding:1px 8px;font-size:11px;margin:2px 2px 0 0;color:#374151">🔧 ${t}</span>`).join('')} · ${FREC_LABEL[s.frecuencia]||s.frecuencia}</div>
           ${s.dir?`<div class="serv-tipo">📍 ${s.dir}</div>`:''}
         </div>
         <span class="pill ${st.cls}">${st.txt}</span>
@@ -1581,7 +1580,11 @@ window.openServicioModal=s=>{
   document.getElementById('s-cliente').value=s?.cliente||'';
   document.getElementById('s-tel').value=s?.tel||'';
   document.getElementById('s-dir').value=s?.dir||'';
-  document.getElementById('s-tipo').value=s?.tipo||'';
+  // Checkboxes de tipo
+  const tipos=Array.isArray(s?.tipos)?s.tipos:(s?.tipo?[s.tipo]:[]);
+  document.querySelectorAll('#s-tipos-grid input[type="checkbox"]').forEach(cb=>{
+    cb.checked=tipos.includes(cb.value);
+  });
   document.getElementById('s-monto').value=s?.monto||'';
   document.getElementById('s-frecuencia').value=s?.frecuencia||'';
   document.getElementById('s-inicio').value=s?.inicio||new Date().toISOString().slice(0,10);
@@ -1598,14 +1601,24 @@ window.openServicioModal=s=>{
 
 window.saveServicio=async()=>{
   const cliente=document.getElementById('s-cliente').value.trim();
-  const tipo=document.getElementById('s-tipo').value;
+  const tipos=[...document.querySelectorAll('#s-tipos-grid input[type="checkbox"]:checked')].map(cb=>cb.value);
   const frecuencia=document.getElementById('s-frecuencia').value;
   const monto=parseFloat(document.getElementById('s-monto').value)||0;
   const inicio=document.getElementById('s-inicio').value;
-  if(!cliente||!tipo||!frecuencia||!monto||!inicio){alert('Completa todos los campos obligatorios.');return;}
+  if(!cliente||!tipos.length||!frecuencia||!monto||!inicio){alert('Completa todos los campos obligatorios y selecciona al menos un tipo de servicio.');return;}
   setSync('loading');
   const prev=editServId?servicios.find(x=>x.id===editServId):null;
-  const obj={cliente,tel:document.getElementById('s-tel').value.trim(),dir:document.getElementById('s-dir').value.trim(),tipo,monto,frecuencia,inicio,proximoPago:document.getElementById('s-proximo').value||calcProximo(inicio,frecuencia),notas:document.getElementById('s-notas').value.trim(),pagosRegistrados:prev?.pagosRegistrados||0,pagado:prev?.pagado||false,ultimoPago:prev?.ultimoPago||''};
+  const obj={
+    cliente,tel:document.getElementById('s-tel').value.trim(),
+    dir:document.getElementById('s-dir').value.trim(),
+    tipos,tipo:tipos.join(', '), // compatibilidad
+    monto,frecuencia,inicio,
+    proximoPago:document.getElementById('s-proximo').value||calcProximo(inicio,frecuencia),
+    notas:document.getElementById('s-notas').value.trim(),
+    pagosRegistrados:prev?.pagosRegistrados||0,
+    pagado:prev?.pagado||false,
+    ultimoPago:prev?.ultimoPago||''
+  };
   if(editServId){await setDoc(doc(db,COL_SERV,editServId),obj);toast('Servicio actualizado');}
   else{await addDoc(collection(db,COL_SERV),obj);toast('Servicio registrado');}
   setSync('ok');closeModal('modal-servicio');
@@ -1750,18 +1763,46 @@ window.generarCotizacionPDF=async(id)=>{
   y+=10;
 
   let total=0;
+  const H=297; // alto A4 en mm
+  const PIE=12; // espacio reservado para pie de página
+
+  // Helper: nueva página si no cabe
+  const checkPage=()=>{
+    if(y>H-PIE-20){
+      // Pie en página actual
+      doc.setFontSize(8);doc.setTextColor(150,150,150);doc.setFont('helvetica','normal');
+      doc.text('Alarmas Ezquerra  •  WhatsApp: 477 700 0872',W/2,H-4,{align:'center'});
+      doc.addPage();
+      y=18;
+      // Repetir encabezado de tabla en nueva página
+      doc.setFillColor(232,41,58);
+      doc.rect(M,y,W-M*2,7,'F');
+      doc.setTextColor(255,255,255);doc.setFontSize(8.5);doc.setFont('helvetica','bold');
+      doc.text('Foto',C.foto,y+5);
+      doc.text('Producto / Especificaciones',C.prod,y+5);
+      doc.text('SKU',C.sku,y+5);
+      doc.text('Cant.',C.cant,y+5,{align:'right'});
+      doc.text('P.Unit.',C.punit,y+5,{align:'right'});
+      doc.text('Subtotal',C.sub,y+5,{align:'right'});
+      y+=10;
+    }
+  };
+
   (ped.items||[]).forEach((item,i)=>{
     const prod=products.find(x=>x.id===item.prodId);
     const specs=prod?.notas||'';
-    const prodColW=C.sku-C.prod-2; // ancho disponible para la columna de producto
-    // Especificaciones divididas en líneas
+    const prodColW=C.sku-C.prod-2;
     let specLines=[];
     if(specs){
       doc.setFont('helvetica','normal');doc.setFontSize(7);
       specLines=doc.splitTextToSize(specs,prodColW);
-      if(specLines.length>3)specLines=specLines.slice(0,3); // máx 3 líneas
+      if(specLines.length>3)specLines=specLines.slice(0,3);
     }
     const rowH=13+(specLines.length>0?specLines.length*4:0);
+
+    // Verificar si cabe en la página actual
+    checkPage();
+
     if(i%2===0){doc.setFillColor(248,249,250);doc.rect(M,y-4,W-M*2,rowH+2,'F');}
 
     // Imagen
@@ -1772,22 +1813,21 @@ window.generarCotizacionPDF=async(id)=>{
       doc.setFontSize(5.5);doc.setTextColor(160,160,160);doc.text('IMG',C.foto+1.5,y+5);
     }
 
-    // Nombre en negrita
+    // Nombre
     const nombre=item.nombre.length>30?item.nombre.slice(0,28)+'…':item.nombre;
     doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(20,20,20);
     doc.text(nombre,C.prod,y+2);
 
-    // Especificaciones en múltiples líneas en gris
+    // Especificaciones
     if(specLines.length>0){
       doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(130,130,130);
       specLines.forEach((line,li)=>doc.text(line,C.prod,y+8+li*4));
     }
 
-    // SKU, cantidad, precio, subtotal alineados al centro de la fila
+    // SKU, cantidad, precio, subtotal
     const midY=y+2;
     doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(80,80,80);
-    const skuTxt=(prod?.sku||item.sku||'').slice(0,10);
-    doc.text(skuTxt,C.sku,midY);
+    doc.text((prod?.sku||item.sku||'').slice(0,10),C.sku,midY);
     doc.setTextColor(20,20,20);doc.setFontSize(8.5);
     doc.text(String(item.qty),C.cant,midY,{align:'right'});
     doc.text(`$${item.precio.toLocaleString('es-MX')}`,C.punit,midY,{align:'right'});
@@ -1797,7 +1837,8 @@ window.generarCotizacionPDF=async(id)=>{
     y+=rowH+2;
   });
 
-  // Total y descuentos
+  // Total y descuentos — verificar que caben
+  if(y>H-PIE-40)checkPage();
   y+=2;
   doc.setDrawColor(232,41,58);doc.setLineWidth(0.5);
   doc.line(M,y,W-M,y);y+=6;
@@ -1839,6 +1880,7 @@ window.generarCotizacionPDF=async(id)=>{
 
   // Notas
   if(ped.notas){
+    if(y>H-PIE-20)checkPage();
     doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(100,100,100);
     doc.text('NOTAS:',M,y);y+=4;
     doc.setFont('helvetica','normal');doc.setTextColor(60,60,60);
@@ -1846,10 +1888,16 @@ window.generarCotizacionPDF=async(id)=>{
     doc.text(notasLines,M,y);y+=notasLines.length*4+4;
   }
 
-  // Pie de página
-  doc.setFontSize(8);doc.setTextColor(150,150,150);doc.setFont('helvetica','normal');
-  doc.text('Esta cotización tiene validez de 15 días a partir de la fecha de emisión.',M,285);
-  doc.text('Alarmas Ezquerra  •  WhatsApp: 477 700 0872',W/2,290,{align:'center'});
+  // Pie de página en TODAS las páginas
+  const totalPages=doc.internal.getNumberOfPages();
+  for(let pg=1;pg<=totalPages;pg++){
+    doc.setPage(pg);
+    doc.setFontSize(8);doc.setTextColor(150,150,150);doc.setFont('helvetica','normal');
+    if(pg===totalPages){
+      doc.text('Esta cotización tiene validez de 15 días a partir de la fecha de emisión.',M,H-8);
+    }
+    doc.text(`Alarmas Ezquerra  •  WhatsApp: 477 700 0872  •  Pág. ${pg}/${totalPages}`,W/2,H-3,{align:'center'});
+  }
 
   // Guardar y compartir
   const filename=`Cotizacion_${folioStr}_${ped.cliente.replace(/\s/g,'_').replace(/[^a-zA-Z0-9_]/g,'')}.pdf`;
