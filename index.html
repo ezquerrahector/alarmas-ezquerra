@@ -695,6 +695,13 @@ const STATUS_CLS={'Pendiente':'s-pendiente','Cotizado':'s-cotizado','Confirmado'
 let products=[], pedidos=[], editId=null, editPedidoId=null, pedidoFilter='Todos';
 
 const fmt=n=>'$'+Math.round(n).toLocaleString('es-MX');
+const fmtNum=(p)=>{
+  if(!p?.num&&!p?.fecha)return '—';
+  const fecha=p.fecha?.toDate?p.fecha.toDate():new Date(p.fecha||Date.now());
+  const año=fecha.getFullYear();
+  const num=String(p.num||1).padStart(4,'0');
+  return`AE-${año}-${num}`;
+};
 const setSync=s=>{const d=document.getElementById('sync-dot'),l=document.getElementById('sync-label');if(s==='ok'){d.className='sync-dot ok';l.textContent='Sincronizado';}else if(s==='loading'){d.className='sync-dot loading';l.textContent='Guardando...';}else{d.className='sync-dot';l.textContent='Sin conexión';}};
 const toast=msg=>{const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);};
 const getSt=p=>p.stock===0?{cls:'pill-out',txt:'Sin stock'}:p.stock<=p.min?{cls:'pill-low',txt:'Stock bajo'}:{cls:'pill-ok',txt:'OK'};
@@ -809,7 +816,7 @@ window.renderPedidos=()=>{
     return`<div class="pedido-card" style="${isCancelado?'opacity:.7':''}">
       <div class="pedido-card-top">
         <div>
-          <div class="pedido-num">#${p.num||'—'} · ${fmtDate(p.fecha)}</div>
+          <div class="pedido-num">${fmtNum(p)} · ${fmtDate(p.fecha)}</div>
           <div class="pedido-cliente">${p.cliente}</div>
           ${p.tel?`<div class="pedido-tel">📞 ${p.tel}</div>`:''}
           ${p.dir?`<div class="pedido-dir">📍 ${p.dir}</div>`:''}
@@ -877,7 +884,7 @@ window.abrirWA=id=>{
   const p=pedidos.find(x=>x.id===id);if(!p)return;
   const items=(p.items||[]).map(i=>`  • ${i.nombre} ×${i.qty} — ${fmt(i.precio*i.qty)}`).join('\n');
   const tot=pedidoTotal(p.items||[]);
-  const msg=`🔒 *Alarmas Ezquerra*\nPedido #${p.num||'—'}\n\n*Cliente:* ${p.cliente}${p.tel?'\n*Tel:* '+p.tel:''}${p.dir?'\n*Dirección:* '+p.dir:''}\n\n*Productos:*\n${items}\n\n*Total: ${fmt(tot)}*\n\n*Estatus:* ${p.status}${p.notas?'\n\n_'+p.notas+'_':''}\n\nGracias por su preferencia 🛡️`;
+  const msg=`🔒 *Alarmas Ezquerra*\nPedido ${fmtNum(p)}\n\n*Cliente:* ${p.cliente}${p.tel?'\n*Tel:* '+p.tel:''}${p.dir?'\n*Dirección:* '+p.dir:''}\n\n*Productos:*\n${items}\n\n*Total: ${fmt(tot)}*\n\n*Estatus:* ${p.status}${p.notas?'\n\n_'+p.notas+'_':''}\n\nGracias por su preferencia 🛡️`;
   document.getElementById('wa-msg-content').textContent=msg;
   const tel=p.tel?p.tel.replace(/\D/g,''):'';
   document.getElementById('btn-wa-send').onclick=()=>{const url=tel?`https://wa.me/52${tel}?text=${encodeURIComponent(msg)}`:`https://wa.me/?text=${encodeURIComponent(msg)}`;window.open(url,'_blank');};
@@ -1399,12 +1406,13 @@ window.generarCotizacionPDF=async(id)=>{
   doc.addImage(logoB64,'PNG',M,3,55,23);
 
   // Cotización / número
+  const fecha=ped.fecha?.toDate?ped.fecha.toDate():new Date(ped.fecha||Date.now());
+  const folioStr=fmtNum(ped);
   doc.setFontSize(20);doc.setFont('helvetica','bold');
   doc.setTextColor(255,255,255);
   doc.text('COTIZACIÓN',W-M,10,{align:'right'});
   doc.setFontSize(10);doc.setFont('helvetica','normal');
-  doc.text(`#${ped.num||id.slice(-4).toUpperCase()}`,W-M,17,{align:'right'});
-  const fecha=ped.fecha?.toDate?ped.fecha.toDate():new Date(ped.fecha||Date.now());
+  doc.text(folioStr,W-M,17,{align:'right'});
   doc.text(fecha.toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'}),W-M,22,{align:'right'});
 
   y=42;
@@ -1457,7 +1465,15 @@ window.generarCotizacionPDF=async(id)=>{
   (ped.items||[]).forEach((item,i)=>{
     const prod=products.find(x=>x.id===item.prodId);
     const specs=prod?.notas||'';
-    const rowH=specs?18:13;
+    const prodColW=C.sku-C.prod-2; // ancho disponible para la columna de producto
+    // Especificaciones divididas en líneas
+    let specLines=[];
+    if(specs){
+      doc.setFont('helvetica','normal');doc.setFontSize(7);
+      specLines=doc.splitTextToSize(specs,prodColW);
+      if(specLines.length>3)specLines=specLines.slice(0,3); // máx 3 líneas
+    }
+    const rowH=13+(specLines.length>0?specLines.length*4:0);
     if(i%2===0){doc.setFillColor(248,249,250);doc.rect(M,y-4,W-M*2,rowH+2,'F');}
 
     // Imagen
@@ -1473,25 +1489,23 @@ window.generarCotizacionPDF=async(id)=>{
     doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(20,20,20);
     doc.text(nombre,C.prod,y+2);
 
-    // Especificaciones en gris
-    if(specs){
+    // Especificaciones en múltiples líneas en gris
+    if(specLines.length>0){
       doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(130,130,130);
-      const specTxt=specs.length>42?specs.slice(0,40)+'…':specs;
-      doc.text(specTxt,C.prod,y+8);
+      specLines.forEach((line,li)=>doc.text(line,C.prod,y+8+li*4));
     }
 
-    // SKU — columna propia, sin solaparse
+    // SKU, cantidad, precio, subtotal alineados al centro de la fila
+    const midY=y+2;
     doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(80,80,80);
     const skuTxt=(prod?.sku||item.sku||'').slice(0,10);
-    doc.text(skuTxt,C.sku,y+2);
-
-    // Cantidad, precio unit, subtotal
+    doc.text(skuTxt,C.sku,midY);
     doc.setTextColor(20,20,20);doc.setFontSize(8.5);
-    doc.text(String(item.qty),C.cant,y+2,{align:'right'});
-    doc.text(`$${item.precio.toLocaleString('es-MX')}`,C.punit,y+2,{align:'right'});
+    doc.text(String(item.qty),C.cant,midY,{align:'right'});
+    doc.text(`$${item.precio.toLocaleString('es-MX')}`,C.punit,midY,{align:'right'});
     const sub=item.qty*item.precio;total+=sub;
     doc.setFont('helvetica','bold');
-    doc.text(`$${sub.toLocaleString('es-MX')}`,C.sub,y+2,{align:'right'});
+    doc.text(`$${sub.toLocaleString('es-MX')}`,C.sub,midY,{align:'right'});
     y+=rowH+2;
   });
 
@@ -1550,7 +1564,7 @@ window.generarCotizacionPDF=async(id)=>{
   doc.text('Alarmas Ezquerra  •  WhatsApp: 477 700 0872',W/2,290,{align:'center'});
 
   // Guardar y compartir
-  const filename=`cotizacion_${ped.cliente.replace(/\s/g,'_')}_#${ped.num||''}.pdf`;
+  const filename=`Cotizacion_${folioStr}_${ped.cliente.replace(/\s/g,'_').replace(/[^a-zA-Z0-9_]/g,'')}.pdf`;
   doc.save(filename);
   toast('PDF descargado');
 };
@@ -1902,7 +1916,7 @@ window.limpiarInventario=async()=>{
 async function notificarPedido(accion,pedido){
   const cfg=getEmailCfg();if(!cfg.dest||!cfg.service)return;
   const items=(pedido.items||[]).map(i=>`• ${i.nombre} x${i.qty} — ${fmt(i.precio*i.qty)}`).join('\n');
-  const asunto=`${accion} — Pedido #${pedido.num||'?'} (${pedido.cliente})`;
+  const asunto=`${accion} — ${fmtNum(pedido)} (${pedido.cliente})`;
   const cuerpo=`${accion}\n\nCliente: ${pedido.cliente}\nTel: ${pedido.tel||'—'}\nDirección: ${pedido.dir||'—'}\nEstatus: ${pedido.status}\n\nProductos:\n${items}\n\nTotal: ${fmt(pedidoTotal(pedido.items||[]))}`;
   await enviarCorreoEmailJS(asunto,cuerpo);
 }
