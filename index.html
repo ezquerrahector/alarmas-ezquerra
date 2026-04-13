@@ -251,6 +251,7 @@ tr:hover td{background:#fafafa}
     <button class="tab" onclick="showView('pedidos',this)">Pedidos</button>
     <button class="tab" onclick="showView('inventario',this)">Inventario</button>
     <button class="tab" onclick="showView('precios',this)">Precios</button>
+    <button class="tab" onclick="showView('proveedor',this)">🛒 Proveedor</button>
     <button class="tab" onclick="showView('config',this)">⚙ Config</button>
   </div>
   <div style="display:flex;align-items:center;gap:10px">
@@ -306,56 +307,146 @@ tr:hover td{background:#fafafa}
   <p style="font-size:11px;color:#9ca3af;margin-top:10px">Verde &gt;40% · Amarillo 20–40% · Rojo &lt;20%</p>
 </div>
 
+<!-- PROVEEDOR -->
+<div id="view-proveedor" class="view">
+
+  <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+    <div class="filter-tabs" style="margin-bottom:0">
+      <button class="filter-tab active" id="prov-tab-todos" onclick="setProvFiltro('todos')">Todos</button>
+      <button class="filter-tab" id="prov-tab-staniot" onclick="setProvFiltro('Staniot')">Staniot</button>
+      <button class="filter-tab" id="prov-tab-kerui" onclick="setProvFiltro('Kerui')">Kerui</button>
+      <button class="filter-tab" id="prov-tab-otro" onclick="setProvFiltro('Otro')">Otro</button>
+    </div>
+    <div style="display:flex;gap:6px;margin-left:auto">
+      <button class="btn-secondary" onclick="toggleTodosProveedor()" id="btn-toggle-prov" style="font-size:12px;padding:6px 12px">☑ Seleccionar todo</button>
+      <button class="btn-primary" style="font-size:12px;padding:6px 12px" onclick="actualizarProv()">↺ Actualizar</button>
+    </div>
+  </div>
+
+  <!-- Tabla de productos a pedir -->
+  <div class="table-wrap" style="display:block;margin-bottom:16px">
+    <table>
+      <thead><tr>
+        <th style="width:5%"><input type="checkbox" id="chk-all-prov" onchange="toggleTodosProvCheck(this.checked)"></th>
+        <th style="width:30%">Producto</th>
+        <th style="width:10%">Marca</th>
+        <th style="width:10%">SKU</th>
+        <th class="num" style="width:8%">Stock</th>
+        <th class="num" style="width:8%">Mínimo</th>
+        <th class="num" style="width:10%">A pedir</th>
+        <th style="width:10%">Estado</th>
+        <th style="width:9%">Costo unit.</th>
+      </tr></thead>
+      <tbody id="prov-body"></tbody>
+    </table>
+  </div>
+
+  <!-- Tarjetas móvil -->
+  <div id="prov-list-mobile" style="margin-bottom:16px"></div>
+
+  <!-- Materiales a resurtir -->
+  <div id="prov-resurtir" style="margin-bottom:16px"></div>
+
+  <!-- Mensaje WhatsApp -->
+  <div id="prov-wa-section" style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px 18px">
+    <div style="font-size:13px;font-weight:600;color:#1a1a2e;margin-bottom:4px">Mensaje para proveedor</div>
+    <div style="font-size:12px;color:#6b7280;margin-bottom:10px">Copia este mensaje y envíalo por WhatsApp a tu proveedor:</div>
+    <div id="prov-wa-msg" style="background:#e7fde4;border:1px solid #b7f0b0;border-radius:8px;padding:12px;font-size:12px;line-height:1.7;white-space:pre-wrap;font-family:inherit;color:#1a1a2e;min-height:80px;margin-bottom:10px"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn-cfg dark" onclick="copiarMsgProv()">📋 Copiar mensaje</button>
+      <button class="btn-wa" id="btn-wa-staniot" onclick="abrirWAProv('Staniot')">💬 WA Staniot</button>
+      <button class="btn-wa" id="btn-wa-kerui" onclick="abrirWAProv('Kerui')" style="background:#2E6DA4">💬 WA Kerui</button>
+    </div>
+  </div>
+
+</div>
+
 <!-- CONFIG -->
 <div id="view-config" class="view">
-
-  <div class="config-section">
-    <h3>📧 Notificaciones por correo (EmailJS)</h3>
-    <p>Se enviará un correo a tu dirección al crear un pedido o cambiar su estatus. Necesitas configurar EmailJS con tu cuenta gratuita en <a href="https://emailjs.com" target="_blank" style="color:#E8293A">emailjs.com</a>.</p>
-    <input class="cfg-input" id="cfg-email-dest" type="email" placeholder="Tu correo destino (ej: hectorezquerra@hotmail.com)">
-    <input class="cfg-input" id="cfg-ejs-service" type="text" placeholder="EmailJS Service ID (ej: service_abc123)">
-    <input class="cfg-input" id="cfg-ejs-template" type="text" placeholder="EmailJS Template ID (ej: template_abc123)">
-    <input class="cfg-input" id="cfg-ejs-pubkey" type="text" placeholder="EmailJS Public Key">
-    <div class="config-btns">
-      <button class="btn-cfg dark" onclick="guardarEmailConfig()">💾 Guardar configuración</button>
-      <button class="btn-cfg" onclick="enviarCorreoPrueba()">✉ Enviar correo de prueba</button>
-    </div>
-    <p id="email-status" style="margin-top:8px;margin-bottom:0;font-size:12px"></p>
+  <div class="filter-tabs" style="margin-bottom:16px">
+    <button class="filter-tab active" id="cfg-tab-exportar" onclick="showCfgTab('exportar')">Exportar</button>
+    <button class="filter-tab" id="cfg-tab-importar" onclick="showCfgTab('importar')">Importar</button>
+    <button class="filter-tab" id="cfg-tab-correo" onclick="showCfgTab('correo')">📧 Correo</button>
+    <button class="filter-tab" id="cfg-tab-datos" onclick="showCfgTab('datos')">Datos</button>
   </div>
 
-  <div class="config-section">
-    <h3>📋 Reporte de existencia</h3>
-    <p>Genera un mensaje con todos los productos disponibles para compartir por WhatsApp con clientes o vendedores.</p>
-    <div class="config-btns">
-      <button class="btn-cfg green" onclick="verReporte()">📋 Ver reporte de existencia</button>
+  <!-- EXPORTAR -->
+  <div id="cfg-exportar">
+    <div class="config-section">
+      <h3>📥 Exportar datos</h3>
+      <p>Descarga tus datos en formato CSV para abrirlos en Excel, o un backup completo en JSON para restaurar después.</p>
+      <div class="config-btns">
+        <button class="btn-cfg" onclick="exportCSV('pedidos')">📦 Pedidos CSV</button>
+        <button class="btn-cfg" onclick="exportCSV('inventario')">📦 Inventario CSV</button>
+        <button class="btn-cfg red" onclick="exportBackup()">💾 Backup completo JSON</button>
+      </div>
     </div>
-  </div>
-
-  <div class="config-section">
-    <h3>📥 Exportar datos</h3>
-    <p>Descarga tus datos en formato CSV o un backup completo en JSON.</p>
-    <div class="config-btns">
-      <button class="btn-cfg" onclick="exportCSV('pedidos')">📦 Pedidos CSV</button>
-      <button class="btn-cfg" onclick="exportCSV('inventario')">📦 Inventario CSV</button>
-      <button class="btn-cfg red" onclick="exportBackup()">💾 Backup completo JSON</button>
+    <div class="config-section">
+      <h3>📋 Reporte de existencia</h3>
+      <p>Genera un mensaje con todos los productos disponibles agrupados por categoría, listo para compartir por WhatsApp con clientes o vendedores.</p>
+      <div class="config-btns">
+        <button class="btn-cfg green" onclick="verReporte()">📋 Ver reporte de existencia</button>
+      </div>
     </div>
   </div>
 
-  <div class="config-section">
-    <h3>📤 Importar / Restaurar</h3>
-    <p>Restaura todos tus datos desde un archivo JSON de backup. <strong>Esto reemplaza todos los datos actuales.</strong></p>
-    <div class="config-btns">
-      <button class="btn-cfg" onclick="document.getElementById('import-file').click()">⚠ Restaurar desde JSON</button>
-      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importarBackup(this)">
+  <!-- IMPORTAR -->
+  <div id="cfg-importar" style="display:none">
+    <div class="config-section">
+      <h3>📤 Importar pedidos desde CSV</h3>
+      <p>Columnas requeridas: <code style="background:#f4f5f7;padding:1px 5px;border-radius:4px;font-size:12px">num, cliente, telefono, direccion, status, fecha, notas</code><br>Los pedidos se agregan sin borrar los existentes.</p>
+      <div class="config-btns">
+        <button class="btn-cfg" onclick="document.getElementById('import-ped-csv').click()">📤 Seleccionar CSV pedidos</button>
+        <input type="file" id="import-ped-csv" accept=".csv" style="display:none" onchange="importarPedidosCSV(this)">
+        <button class="btn-cfg" onclick="descargarPlantillaPedidos()">📋 Plantilla</button>
+      </div>
+    </div>
+    <div class="config-section">
+      <h3>📤 Importar inventario desde CSV</h3>
+      <p>Columnas requeridas: <code style="background:#f4f5f7;padding:1px 5px;border-radius:4px;font-size:12px">nombre, categoria, marca, sku, stock, minimo, costo, precio, notas</code></p>
+      <div class="config-btns">
+        <button class="btn-cfg" onclick="document.getElementById('import-inv-csv').click()">📤 Seleccionar CSV inventario</button>
+        <input type="file" id="import-inv-csv" accept=".csv" style="display:none" onchange="importarInventarioCSV(this)">
+        <button class="btn-cfg" onclick="descargarPlantillaInventario()">📋 Plantilla</button>
+      </div>
+    </div>
+    <div class="config-section">
+      <h3>♻ Restaurar backup completo</h3>
+      <p>Restaura todos los datos desde un archivo JSON de backup. <strong>Esto reemplaza todos los datos actuales.</strong></p>
+      <div class="config-btns">
+        <button class="btn-cfg" style="border-color:#fca5a5;color:#991b1b" onclick="document.getElementById('import-file').click()">⚠ Restaurar JSON</button>
+        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importarBackup(this)">
+      </div>
     </div>
   </div>
 
-  <div class="config-section" style="border-color:#fca5a5">
-    <h3 style="color:#991b1b">🗑 Zona peligrosa</h3>
-    <p>Estas acciones son irreversibles. Úsalas con cuidado.</p>
-    <div class="config-btns">
-      <button class="btn-cfg" style="border-color:#fca5a5;color:#991b1b" onclick="limpiarPedidos()">Limpiar pedidos</button>
-      <button class="btn-cfg" style="border-color:#fca5a5;color:#991b1b" onclick="limpiarInventario()">Resetear stock a 0</button>
+  <!-- CORREO -->
+  <div id="cfg-correo" style="display:none">
+    <div class="config-section">
+      <h3>📧 Notificaciones por correo (EmailJS)</h3>
+      <p>Se enviará un correo a tu dirección al crear un pedido o cambiar su estatus. Regístrate gratis en <a href="https://emailjs.com" target="_blank" style="color:#E8293A">emailjs.com</a>, crea un servicio, una plantilla con los campos <code style="background:#f4f5f7;padding:1px 5px;border-radius:4px;font-size:12px">{{subject}}</code>, <code style="background:#f4f5f7;padding:1px 5px;border-radius:4px;font-size:12px">{{message}}</code> y <code style="background:#f4f5f7;padding:1px 5px;border-radius:4px;font-size:12px">{{from_name}}</code>, y pega los datos aquí.</p>
+      <input class="cfg-input" id="cfg-email-dest" type="email" placeholder="Tu correo destino (ej: hectorezquerra@hotmail.com)">
+      <input class="cfg-input" id="cfg-ejs-service" type="text" placeholder="EmailJS Service ID (ej: service_abc123)">
+      <input class="cfg-input" id="cfg-ejs-template" type="text" placeholder="EmailJS Template ID (ej: template_abc123)">
+      <input class="cfg-input" id="cfg-ejs-pubkey" type="text" placeholder="EmailJS Public Key">
+      <div class="config-btns">
+        <button class="btn-cfg dark" onclick="guardarEmailConfig()">💾 Guardar configuración</button>
+        <button class="btn-cfg" onclick="enviarCorreoPrueba()">✉ Enviar correo de prueba</button>
+      </div>
+      <p id="email-status" style="margin-top:8px;margin-bottom:0;font-size:12px"></p>
+    </div>
+  </div>
+
+  <!-- DATOS -->
+  <div id="cfg-datos" style="display:none">
+    <div class="config-section" style="border-color:#fca5a5">
+      <h3 style="color:#991b1b">🗑 Gestión de datos</h3>
+      <p>Estas acciones son <strong>irreversibles</strong>. Se recomienda hacer un backup antes.</p>
+      <div class="config-btns" style="flex-direction:column;align-items:flex-start;gap:10px">
+        <button class="btn-cfg" style="border-color:#fca5a5;color:#991b1b" onclick="limpiarPedidos()">🗑 Limpiar pedidos (mantiene inventario)</button>
+        <button class="btn-cfg" style="border-color:#fca5a5;color:#991b1b" onclick="limpiarInventario()">🗑 Resetear stock a 0 (mantiene productos)</button>
+        <button class="btn-cfg red" onclick="borrarTodo()">⚠ Borrar TODO y empezar de cero</button>
+      </div>
     </div>
   </div>
 
@@ -558,7 +649,6 @@ function renderDash(){
         }).join('')}
       </div>
     </div>`:''}
-    <div style="grid-column:1/-1;font-size:13px;font-weight:600;color:#1a1a2e;margin-top:4px;margin-bottom:6px">Stock por categoría</div>
     ${Object.entries(bcats).map(([cat,d])=>`<div class="cat-card" onclick="filterByCat('${cat}')"><div class="cat-icon">${CATS[cat]||'📦'}</div><div class="cat-name">${cat}</div><div class="cat-count">${d.count} productos</div><div class="cat-stock">${d.stock} uds</div></div>`).join('')}
   `;
 }
@@ -849,6 +939,7 @@ window.showView=(v,tab)=>{
   if(v==='inventario'){fillCatFilter();renderInv();}
   if(v==='precios')renderPrecios();
   if(v==='pedidos')renderPedidos();
+  if(v==='proveedor')renderProveedor();
   if(v==='config')cargarEmailConfig();
 };
 
@@ -860,7 +951,143 @@ window.saveProduct=async()=>{const nombre=document.getElementById('f-nombre').va
 window.editProduct=id=>{const p=products.find(x=>x.id===id);if(p)openModal(p);};
 window.deleteProduct=async id=>{if(!confirm('¿Eliminar?'))return;setSync('loading');await deleteDoc(doc(db,COL_PROD,id));setSync('ok');toast('Eliminado');};
 
-/* ===== CONFIG ===== */
+/* ===== PROVEEDOR ===== */
+let provFiltro='todos';
+let provSeleccionados=new Set();
+
+window.setProvFiltro=f=>{
+  provFiltro=f;
+  ['todos','Staniot','Kerui','Otro'].forEach(t=>{
+    const btn=document.getElementById('prov-tab-'+t.toLowerCase());
+    if(btn)btn.classList.toggle('active',t===f||(f==='todos'&&t==='todos'));
+  });
+  renderProveedor();
+};
+
+window.actualizarProv=()=>{provSeleccionados.clear();renderProveedor();toast('Lista actualizada');};
+
+function renderProveedor(){
+  // Filtrar productos con stock bajo o agotado
+  let lista=products.filter(p=>p.stock<=p.min);
+  if(provFiltro!=='todos') lista=lista.filter(p=>(p.marca||'Staniot')===provFiltro);
+
+  // Auto-seleccionar todos si el set está vacío
+  if(provSeleccionados.size===0) lista.forEach(p=>provSeleccionados.add(p.id));
+
+  // TABLA DESKTOP
+  const tbody=document.getElementById('prov-body');
+  if(tbody){
+    tbody.innerHTML=lista.map(p=>{
+      const aPedir=Math.max(p.min*2-p.stock,p.min);
+      const marcaCls=p.marca==='Kerui'?'background:#dbeafe;color:#1e40af':p.marca==='Otro'?'background:#f3f4f6;color:#374151':'background:#fef3c7;color:#92400e';
+      const st=p.stock===0?`<span class="pill pill-out">Agotado</span>`:`<span class="pill pill-low">Stock bajo</span>`;
+      const chk=provSeleccionados.has(p.id);
+      return`<tr style="${chk?'':'opacity:.5'}">
+        <td><input type="checkbox" ${chk?'checked':''} onchange="toggleProvItem('${p.id}',this.checked)"></td>
+        <td title="${p.nombre}">${p.nombre}</td>
+        <td><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px;${marcaCls}">${p.marca||'Staniot'}</span></td>
+        <td style="color:#6b7280">${p.sku||'—'}</td>
+        <td class="num">${p.stock}</td>
+        <td class="num" style="color:#9ca3af">${p.min}</td>
+        <td class="num"><input type="number" min="1" value="${aPedir}" style="width:60px;padding:3px 6px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;text-align:right;font-family:inherit" onchange="updateProvCantidad('${p.id}',this.value)"></td>
+        <td>${st}</td>
+        <td class="num" style="font-size:12px">${fmt(p.costo)}</td>
+      </tr>`;
+    }).join('') || `<tr><td colspan="9" style="text-align:center;color:#9ca3af;padding:24px">✓ Sin productos que resurtir ${provFiltro!=='todos'?'en '+provFiltro:''}</td></tr>`;
+  }
+
+  // RESUMEN
+  const selList=lista.filter(p=>provSeleccionados.has(p.id));
+  const totalCosto=selList.reduce((a,p)=>{
+    const aPedir=provCantidades[p.id]||Math.max(p.min*2-p.stock,p.min);
+    return a+aPedir*p.costo;
+  },0);
+
+  const resurtir=document.getElementById('prov-resurtir');
+  if(resurtir&&selList.length){
+    resurtir.innerHTML=`<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px 18px">
+      <div style="font-size:13px;font-weight:600;color:#1a1a2e;margin-bottom:10px">Resumen del pedido al proveedor</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr>
+          <th style="text-align:left;padding:6px 10px;border-bottom:1px solid #e5e7eb;color:#6b7280;font-size:11px;text-transform:uppercase">Producto</th>
+          <th style="text-align:left;padding:6px 10px;border-bottom:1px solid #e5e7eb;color:#6b7280;font-size:11px">Marca</th>
+          <th style="text-align:right;padding:6px 10px;border-bottom:1px solid #e5e7eb;color:#6b7280;font-size:11px">Stock</th>
+          <th style="text-align:right;padding:6px 10px;border-bottom:1px solid #e5e7eb;color:#6b7280;font-size:11px">A pedir</th>
+          <th style="text-align:right;padding:6px 10px;border-bottom:1px solid #e5e7eb;color:#6b7280;font-size:11px">Subtotal</th>
+        </tr></thead>
+        <tbody>${selList.map(p=>{
+          const aPedir=provCantidades[p.id]||Math.max(p.min*2-p.stock,p.min);
+          return`<tr>
+            <td style="padding:6px 10px;border-bottom:1px solid #f3f4f6">${p.nombre}</td>
+            <td style="padding:6px 10px;border-bottom:1px solid #f3f4f6;color:#6b7280">${p.marca||'Staniot'}</td>
+            <td style="padding:6px 10px;border-bottom:1px solid #f3f4f6;text-align:right;color:#991b1b">${p.stock}</td>
+            <td style="padding:6px 10px;border-bottom:1px solid #f3f4f6;text-align:right;font-weight:600">${aPedir}</td>
+            <td style="padding:6px 10px;border-bottom:1px solid #f3f4f6;text-align:right">${fmt(aPedir*p.costo)}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
+      <div style="display:flex;justify-content:flex-end;padding:10px 10px 0;font-size:13px;font-weight:600;color:#1a1a2e;border-top:1px solid #e5e7eb;margin-top:4px">
+        Total estimado: <span style="color:#E8293A;margin-left:8px">${fmt(totalCosto)}</span>
+      </div>
+    </div>`;
+  } else if(resurtir){
+    resurtir.innerHTML='';
+  }
+
+  // MENSAJE WA
+  generarMsgProv(selList);
+}
+
+const provCantidades={};
+window.updateProvCantidad=(id,val)=>{provCantidades[id]=parseInt(val)||1;renderProveedor();};
+window.toggleProvItem=(id,checked)=>{checked?provSeleccionados.add(id):provSeleccionados.delete(id);renderProveedor();};
+window.toggleTodosProveedor=()=>{
+  const lista=products.filter(p=>p.stock<=p.min&&(provFiltro==='todos'||(p.marca||'Staniot')===provFiltro));
+  if(provSeleccionados.size===lista.length){provSeleccionados.clear();}
+  else{lista.forEach(p=>provSeleccionados.add(p.id));}
+  renderProveedor();
+};
+window.toggleTodosProvCheck=checked=>{
+  const lista=products.filter(p=>p.stock<=p.min&&(provFiltro==='todos'||(p.marca||'Staniot')===provFiltro));
+  lista.forEach(p=>checked?provSeleccionados.add(p.id):provSeleccionados.delete(p.id));
+  renderProveedor();
+};
+
+function generarMsgProv(selList){
+  const msg_el=document.getElementById('prov-wa-msg');
+  if(!selList.length){if(msg_el)msg_el.textContent='Selecciona productos para generar el mensaje.';return;}
+  const fecha=new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'});
+  let msg=`Buen día, les escribo de parte de *Alarmas Ezquerra*.\nNecesitaría que me prepararan el siguiente pedido (${fecha}):\n\n`;
+  const porMarca={};
+  selList.forEach(p=>{
+    const m=p.marca||'Staniot';
+    if(!porMarca[m])porMarca[m]=[];
+    const aPedir=provCantidades[p.id]||Math.max(p.min*2-p.stock,p.min);
+    porMarca[m].push({...p,aPedir});
+  });
+  Object.entries(porMarca).forEach(([marca,prods])=>{
+    msg+=`*${marca}:*\n`;
+    prods.forEach(p=>{msg+=`  • ${p.nombre}${p.sku?' ('+p.sku+')':''} — ${p.aPedir} piezas\n`;});
+    msg+='\n';
+  });
+  msg+=`Quedo en espera de confirmación de disponibilidad y tiempo de entrega.\n\nGracias.`;
+  if(msg_el)msg_el.textContent=msg;
+}
+
+window.copiarMsgProv=()=>{
+  const msg=document.getElementById('prov-wa-msg').textContent;
+  navigator.clipboard.writeText(msg);toast('Mensaje copiado');
+};
+window.abrirWAProv=marca=>{
+  const msg=document.getElementById('prov-wa-msg').textContent;
+  // Números de proveedores (puedes editarlos en Config más adelante)
+  const nums={Staniot:'8613823609270',Kerui:'8619835810954'};
+  const num=nums[marca]||'';
+  const url=num?`https://wa.me/${num}?text=${encodeURIComponent(msg)}`:`https://wa.me/?text=${encodeURIComponent(msg)}`;
+  window.open(url,'_blank');
+};
+
+/* ===== FIN PROVEEDOR ===== */
 function cargarEmailConfig(){
   try{
     const cfg=JSON.parse(localStorage.getItem('ae_email_cfg')||'{}');
@@ -959,6 +1186,59 @@ window.importarBackup=async file=>{
   file.value='';
 };
 
+window.showCfgTab=tab=>{
+  ['exportar','importar','correo','datos'].forEach(t=>{
+    document.getElementById('cfg-'+t).style.display=t===tab?'block':'none';
+    document.getElementById('cfg-tab-'+t).classList.toggle('active',t===tab);
+  });
+  if(tab==='correo')cargarEmailConfig();
+};
+
+window.descargarPlantillaPedidos=()=>{
+  const csv='num,cliente,telefono,direccion,status,fecha,notas\n1,Juan García,4771234567,Calle Ejemplo 123,Pendiente,2026-04-01,Instalación residencial\n';
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='plantilla_pedidos.csv';a.click();
+};
+window.descargarPlantillaInventario=()=>{
+  const csv='nombre,categoria,marca,sku,stock,minimo,costo,precio,notas\nSensor de movimiento PR200,Sensores de movimiento,Staniot,PR200,10,5,162,320,433MHz\n';
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='plantilla_inventario.csv';a.click();
+};
+
+window.importarPedidosCSV=async file=>{
+  if(!file.files[0])return;
+  const text=await file.files[0].text();
+  const rows=text.trim().split('\n').slice(1);
+  let count=0;
+  for(const row of rows){
+    const[num,cliente,tel,dir,status,fecha,notas]=row.split(',').map(s=>s.replace(/^"|"$/g,'').trim());
+    if(!cliente)continue;
+    await addDoc(collection(db,COL_PED),{num:parseInt(num)||pedidos.length+1,cliente,tel:tel||'',dir:dir||'',status:status||'Pendiente',fecha:fecha?new Date(fecha):new Date(),notas:notas||'',items:[]});
+    count++;
+  }
+  toast(`${count} pedidos importados`);file.value='';
+};
+
+window.importarInventarioCSV=async file=>{
+  if(!file.files[0])return;
+  const text=await file.files[0].text();
+  const rows=text.trim().split('\n').slice(1);
+  let count=0;
+  for(const row of rows){
+    const[nombre,cat,marca,sku,stock,min,costo,precio,notas]=row.split(',').map(s=>s.replace(/^"|"$/g,'').trim());
+    if(!nombre)continue;
+    await addDoc(collection(db,COL_PROD),{nombre,cat:cat||'Accesorios',marca:marca||'Staniot',sku:sku||'',stock:parseInt(stock)||0,min:parseInt(min)||1,costo:parseFloat(costo)||0,precio:parseFloat(precio)||0,notas:notas||''});
+    count++;
+  }
+  toast(`${count} productos importados`);file.value='';
+};
+
+window.borrarTodo=async()=>{
+  if(!confirm('⚠ ¿Borrar TODOS los pedidos y productos? Esta acción es irreversible.'))return;
+  if(!confirm('Última confirmación: ¿estás seguro?'))return;
+  setSync('loading');
+  const b1=writeBatch(db);(await getDocs(collection(db,COL_PED))).docs.forEach(d=>b1.delete(d.ref));await b1.commit();
+  const b2=writeBatch(db);(await getDocs(collection(db,COL_PROD))).docs.forEach(d=>b2.delete(d.ref));await b2.commit();
+  setSync('ok');toast('Todo eliminado');
+};
 window.limpiarPedidos=async()=>{
   if(!confirm('¿Eliminar TODOS los pedidos? Esta acción es irreversible.'))return;
   setSync('loading');
