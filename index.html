@@ -1256,30 +1256,57 @@ window.generarCotizacionPDF=async(id)=>{
   doc.text(`Estatus: ${ped.status}`,W-M,38,{align:'right'});
 
   y+=8;
-  // Tabla de productos
+  // Tabla de productos — precargar imágenes
+  const imgCache={};
+  await Promise.all((ped.items||[]).map(async item=>{
+    const prod=products.find(x=>x.id===item.prodId);
+    if(prod?.imgUrl){
+      try{
+        const resp=await fetch(prod.imgUrl);
+        const blob=await resp.blob();
+        imgCache[item.prodId]=await new Promise(res=>{
+          const r=new FileReader();r.onload=()=>res(r.result);r.readAsDataURL(blob);
+        });
+      }catch(e){}
+    }
+  }));
+
+  // Encabezado tabla
   doc.setFillColor(232,41,58);
   doc.rect(M,y,W-M*2,7,'F');
   doc.setTextColor(255,255,255);doc.setFontSize(9);doc.setFont('helvetica','bold');
-  doc.text('Producto',M+2,y+5);
-  doc.text('SKU',M+90,y+5);
-  doc.text('Cant.',M+115,y+5,{align:'right'});
-  doc.text('Precio unit.',M+140,y+5,{align:'right'});
+  doc.text('Foto',M+2,y+5);
+  doc.text('Producto',M+18,y+5);
+  doc.text('SKU',M+88,y+5);
+  doc.text('Cant.',M+110,y+5,{align:'right'});
+  doc.text('Precio unit.',M+138,y+5,{align:'right'});
   doc.text('Subtotal',W-M-2,y+5,{align:'right'});
   y+=10;
 
   let total=0;
   (ped.items||[]).forEach((item,i)=>{
-    if(i%2===0){doc.setFillColor(248,249,250);doc.rect(M,y-4,W-M*2,8,'F');}
+    const rowH=14;
+    if(i%2===0){doc.setFillColor(248,249,250);doc.rect(M,y-4,W-M*2,rowH,'F');}
     doc.setTextColor(30,30,30);doc.setFont('helvetica','normal');doc.setFontSize(9);
     const prod=products.find(x=>x.id===item.prodId);
-    const nombre=item.nombre.length>38?item.nombre.slice(0,36)+'...':item.nombre;
-    doc.text(nombre,M+2,y);
-    doc.text(prod?.sku||'',M+90,y);
-    doc.text(String(item.qty),M+115,y,{align:'right'});
-    doc.text(`$${item.precio.toLocaleString('es-MX')}`,M+140,y,{align:'right'});
+
+    // Imagen del producto
+    if(imgCache[item.prodId]){
+      try{doc.addImage(imgCache[item.prodId],'JPEG',M+1,y-3,10,10);}catch(e){}
+    } else {
+      doc.setFillColor(240,241,242);doc.rect(M+1,y-3,10,10,'F');
+      doc.setFontSize(6);doc.setTextColor(150,150,150);doc.text('IMG',M+2,y+4);
+      doc.setFontSize(9);doc.setTextColor(30,30,30);
+    }
+
+    const nombre=item.nombre.length>32?item.nombre.slice(0,30)+'...':item.nombre;
+    doc.text(nombre,M+18,y+2);
+    doc.text(prod?.sku||item.sku||'',M+88,y+2);
+    doc.text(String(item.qty),M+110,y+2,{align:'right'});
+    doc.text(`$${item.precio.toLocaleString('es-MX')}`,M+138,y+2,{align:'right'});
     const sub=item.qty*item.precio;total+=sub;
-    doc.text(`$${sub.toLocaleString('es-MX')}`,W-M-2,y,{align:'right'});
-    y+=8;
+    doc.text(`$${sub.toLocaleString('es-MX')}`,W-M-2,y+2,{align:'right'});
+    y+=rowH;
   });
 
   // Total
