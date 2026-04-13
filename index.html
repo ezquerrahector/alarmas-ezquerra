@@ -228,7 +228,11 @@ tr:hover td{background:#fafafa}
 .install-banner{display:none;background:#111;color:#fff;padding:10px 14px;align-items:center;justify-content:space-between;gap:8px;font-size:12px}
 .install-banner.show{display:flex}
 .btn-install{padding:6px 12px;background:#E8293A;color:#fff;border:none;border-radius:6px;font-size:12px;font-family:inherit;cursor:pointer;font-weight:600;flex-shrink:0}
-/* DETALLE PRODUCTO */
+th.sortable{cursor:pointer;user-select:none;white-space:nowrap}
+th.sortable:hover{color:#E8293A}
+th.sortable::after{content:' ⇅';font-size:10px;opacity:.4}
+th.sort-asc::after{content:' ▲';opacity:1;color:#E8293A}
+th.sort-desc::after{content:' ▼';opacity:1;color:#E8293A}
 .detalle-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center}
 .detalle-overlay.open{display:flex}
 .detalle-modal{background:#fff;border-radius:16px;width:min(560px,96vw);max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
@@ -290,6 +294,16 @@ tr:hover td{background:#fafafa}
   <div class="pedidos-header">
     <button class="btn-primary" onclick="openPedidoModal()">+ Nuevo pedido</button>
     <input type="text" id="search-pedidos" placeholder="Buscar cliente..." oninput="renderPedidos()" style="flex:1;min-width:140px;padding:8px 11px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:#1a1a2e;outline:none">
+    <select id="pedidos-sort" onchange="renderPedidos()" style="padding:8px 11px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:#1a1a2e;outline:none">
+      <option value="fecha-desc">Más reciente</option>
+      <option value="fecha-asc">Más antiguo</option>
+      <option value="cliente-asc">Cliente A–Z</option>
+      <option value="cliente-desc">Cliente Z–A</option>
+      <option value="total-desc">Mayor total</option>
+      <option value="total-asc">Menor total</option>
+      <option value="num-desc">N° pedido ↓</option>
+      <option value="num-asc">N° pedido ↑</option>
+    </select>
   </div>
   <div class="filter-tabs" id="filter-tabs"></div>
   <div id="pedidos-list"></div>
@@ -305,12 +319,16 @@ tr:hover td{background:#fafafa}
   <div class="prod-list" id="prod-list"></div>
   <div class="table-wrap"><table><thead><tr>
     <th style="width:4%"></th>
-    <th style="width:7%">SKU</th>
-    <th style="width:20%">Producto</th><th style="width:10%">Categoría</th>
-    <th style="width:8%">Marca</th>
-    <th class="num" style="width:6%">Stock</th><th class="num" style="width:5%">Mín.</th>
-    <th class="num" style="width:9%">Costo</th><th class="num" style="width:9%">Precio</th>
-    <th style="width:8%">Estado</th><th style="width:14%"></th>
+    <th class="sortable" style="width:7%" onclick="sortInv('sku')">SKU</th>
+    <th class="sortable" style="width:20%" onclick="sortInv('nombre')">Producto</th>
+    <th class="sortable" style="width:10%" onclick="sortInv('cat')">Categoría</th>
+    <th class="sortable" style="width:8%" onclick="sortInv('marca')">Marca</th>
+    <th class="sortable num" style="width:6%" onclick="sortInv('stock')">Stock</th>
+    <th class="num" style="width:5%">Mín.</th>
+    <th class="sortable num" style="width:9%" onclick="sortInv('costo')">Costo</th>
+    <th class="sortable num" style="width:9%" onclick="sortInv('precio')">Precio</th>
+    <th class="sortable" style="width:8%" onclick="sortInv('estado')">Estado</th>
+    <th style="width:14%"></th>
   </tr></thead><tbody id="inv-body"></tbody></table></div>
 </div>
 
@@ -319,9 +337,12 @@ tr:hover td{background:#fafafa}
   <p style="font-size:12px;color:#6b7280;margin-bottom:12px">Edita el precio. El margen se actualiza automáticamente.</p>
   <div class="precio-list" id="precio-list"></div>
   <div class="precio-table-wrap"><table><thead><tr>
-    <th style="width:30%">Producto</th><th style="width:14%">Categoría</th>
-    <th class="num" style="width:12%">Costo</th><th class="num" style="width:16%">Precio venta</th>
-    <th class="num" style="width:13%">Ganancia</th><th style="width:15%">Margen</th>
+    <th class="sortable" style="width:30%" onclick="sortPrecios('nombre')">Producto</th>
+    <th class="sortable" style="width:14%" onclick="sortPrecios('cat')">Categoría</th>
+    <th class="sortable num" style="width:12%" onclick="sortPrecios('costo')">Costo</th>
+    <th class="num" style="width:16%">Precio venta</th>
+    <th class="sortable num" style="width:13%" onclick="sortPrecios('ganancia')">Ganancia</th>
+    <th class="sortable" style="width:15%" onclick="sortPrecios('margen')">Margen</th>
   </tr></thead><tbody id="precio-body"></tbody></table></div>
   <p style="font-size:11px;color:#9ca3af;margin-top:10px">Verde &gt;40% · Amarillo 20–40% · Rojo &lt;20%</p>
 </div>
@@ -771,7 +792,17 @@ window.renderPedidos=()=>{
   const q=(document.getElementById('search-pedidos')?.value||'').toLowerCase();
   let list=pedidos.filter(p=>pedidoFilter==='Todos'||p.status===pedidoFilter);
   if(q)list=list.filter(p=>p.cliente.toLowerCase().includes(q)||(p.tel||'').includes(q));
-  list=list.sort((a,b)=>{const da=a.fecha?.toDate?a.fecha.toDate():new Date(a.fecha||0);const db2=b.fecha?.toDate?b.fecha.toDate():new Date(b.fecha||0);return db2-da;});
+
+  const sortVal=(document.getElementById('pedidos-sort')?.value)||'fecha-desc';
+  const [sortField,sortDirStr]=sortVal.split('-');
+  const sd=sortDirStr==='asc'?1:-1;
+  list=list.sort((a,b)=>{
+    if(sortField==='fecha'){const da=a.fecha?.toDate?a.fecha.toDate():new Date(a.fecha||0);const db2=b.fecha?.toDate?b.fecha.toDate():new Date(b.fecha||0);return sd*(da-db2);}
+    if(sortField==='cliente')return sd*a.cliente.localeCompare(b.cliente,'es');
+    if(sortField==='total'){const ta=a.totalFinal??pedidoTotal(a.items||[]);const tb=b.totalFinal??pedidoTotal(b.items||[]);return sd*(ta-tb);}
+    if(sortField==='num')return sd*((a.num||0)-(b.num||0));
+    return 0;
+  });
   if(!list.length){document.getElementById('pedidos-list').innerHTML=`<div style="text-align:center;padding:40px;color:#9ca3af;font-size:14px">No hay pedidos ${pedidoFilter!=='Todos'?'con estatus "'+pedidoFilter+'"':''}</div>`;return;}
   document.getElementById('pedidos-list').innerHTML=list.map(p=>{
     const tot=pedidoTotal(p.items||[]);
@@ -1069,13 +1100,54 @@ window.savePedido=async()=>{
 window.editPedido=id=>{const p=pedidos.find(x=>x.id===id);if(p)openPedidoModal(p);};
 window.deletePedido=async id=>{if(!confirm('¿Eliminar este pedido?'))return;setSync('loading');await deleteDoc(doc(db,COL_PED,id));setSync('ok');toast('Pedido eliminado');};
 
+/* ===== SORTING ===== */
+let invSortCol='nombre', invSortDir=1;
+let precioSortCol='nombre', precioSortDir=1;
+
+window.sortInv=col=>{
+  if(invSortCol===col){invSortDir*=-1;}else{invSortCol=col;invSortDir=1;}
+  // Actualizar clases visuales
+  document.querySelectorAll('#view-inventario th.sortable').forEach(th=>{
+    th.classList.remove('sort-asc','sort-desc');
+    if(th.getAttribute('onclick')?.includes(`'${col}'`)){
+      th.classList.add(invSortDir===1?'sort-asc':'sort-desc');
+    }
+  });
+  renderInv();
+};
+
+window.sortPrecios=col=>{
+  if(precioSortCol===col){precioSortDir*=-1;}else{precioSortCol=col;precioSortDir=1;}
+  document.querySelectorAll('#view-precios th.sortable').forEach(th=>{
+    th.classList.remove('sort-asc','sort-desc');
+    if(th.getAttribute('onclick')?.includes(`'${col}'`)){
+      th.classList.add(precioSortDir===1?'sort-asc':'sort-desc');
+    }
+  });
+  renderPrecios();
+};
+
+function applySort(list, col, dir){
+  return [...list].sort((a,b)=>{
+    let va,vb;
+    if(col==='estado'){va=a.stock===0?0:a.stock<=a.min?1:2;vb=b.stock===0?0:b.stock<=b.min?1:2;}
+    else if(col==='ganancia'){va=a.precio-a.costo;vb=b.precio-b.costo;}
+    else if(col==='margen'){va=a.costo>0?(a.precio-a.costo)/a.precio:0;vb=b.costo>0?(b.precio-b.costo)/b.precio:0;}
+    else{va=a[col]??'';vb=b[col]??'';}
+    if(typeof va==='string') return dir*va.localeCompare(vb,'es');
+    return dir*(va-vb);
+  });
+}
+/* ===== FIN SORTING ===== */
+
 /* ===== INVENTARIO ===== */
 window.filterByCat=cat=>{showView('inventario',document.querySelectorAll('.tab')[2]);document.getElementById('filter-cat').value=cat;renderInv();};
 
 window.renderInv=()=>{
   const q=document.getElementById('search').value.toLowerCase();
   const cat=document.getElementById('filter-cat').value;
-  const list=products.filter(p=>(!q||p.nombre.toLowerCase().includes(q)||(p.sku||'').toLowerCase().includes(q)||p.cat.toLowerCase().includes(q))&&(!cat||p.cat===cat));
+  const filtered=products.filter(p=>(!q||p.nombre.toLowerCase().includes(q)||(p.sku||'').toLowerCase().includes(q)||p.cat.toLowerCase().includes(q))&&(!cat||p.cat===cat));
+  const list=applySort(filtered,invSortCol,invSortDir);
   document.getElementById('prod-list').innerHTML=list.map(p=>{
     const st=getSt(p);
     const marcaCls=p.marca==='Kerui'?'background:#dbeafe;color:#1e40af':p.marca==='Otro'?'background:#f3f4f6;color:#374151':'background:#fef3c7;color:#92400e';
@@ -1134,8 +1206,9 @@ window.renderInv=()=>{
 };
 
 window.renderPrecios=()=>{
-  document.getElementById('precio-list').innerHTML=products.map(p=>{const gan=p.precio-p.costo,mar=p.costo>0?Math.round(gan/p.precio*100):0,mcls=mar>=40?'pill-alta':mar>=20?'pill-med':'pill-baja';return`<div class="precio-card"><div class="precio-card-top"><div class="prod-name">${p.nombre}</div><span class="pill ${mcls}">${mar}%</span></div><div class="precio-grid"><div class="precio-field"><label>Costo</label><div class="val">${fmt(p.costo)}</div></div><div class="precio-field"><label>Ganancia</label><div class="val" style="color:#166534">${fmt(gan)}</div></div></div><div class="precio-input-wrap"><label>Precio de venta MXN</label><input class="precio-input" type="number" value="${p.precio}" min="0" step="1" onchange="updatePrecio('${p.id}',this.value)"></div></div>`;}).join('');
-  document.getElementById('precio-body').innerHTML=products.map(p=>{const gan=p.precio-p.costo,mar=p.costo>0?Math.round(gan/p.precio*100):0,mcls=mar>=40?'pill-alta':mar>=20?'pill-med':'pill-baja';return`<tr><td title="${p.nombre}">${p.nombre}</td><td>${p.cat}</td><td class="num">${fmt(p.costo)}</td><td class="num"><input style="width:100px;padding:4px 7px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;text-align:right;background:#fff;color:#1a1a2e;outline:none;font-family:inherit" type="number" value="${p.precio}" min="0" step="1" onchange="updatePrecio('${p.id}',this.value)"></td><td class="num">${fmt(gan)}</td><td><span class="pill ${mcls}">${mar}%</span></td></tr>`;}).join('');
+  const sorted=applySort(products,precioSortCol,precioSortDir);
+  document.getElementById('precio-list').innerHTML=sorted.map(p=>{const gan=p.precio-p.costo,mar=p.costo>0?Math.round(gan/p.precio*100):0,mcls=mar>=40?'pill-alta':mar>=20?'pill-med':'pill-baja';return`<div class="precio-card"><div class="precio-card-top"><div class="prod-name">${p.nombre}</div><span class="pill ${mcls}">${mar}%</span></div><div class="precio-grid"><div class="precio-field"><label>Costo</label><div class="val">${fmt(p.costo)}</div></div><div class="precio-field"><label>Ganancia</label><div class="val" style="color:#166534">${fmt(gan)}</div></div></div><div class="precio-input-wrap"><label>Precio de venta MXN</label><input class="precio-input" type="number" value="${p.precio}" min="0" step="1" onchange="updatePrecio('${p.id}',this.value)"></div></div>`;}).join('');
+  document.getElementById('precio-body').innerHTML=sorted.map(p=>{const gan=p.precio-p.costo,mar=p.costo>0?Math.round(gan/p.precio*100):0,mcls=mar>=40?'pill-alta':mar>=20?'pill-med':'pill-baja';return`<tr><td title="${p.nombre}">${p.nombre}</td><td>${p.cat}</td><td class="num">${fmt(p.costo)}</td><td class="num"><input style="width:100px;padding:4px 7px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;text-align:right;background:#fff;color:#1a1a2e;outline:none;font-family:inherit" type="number" value="${p.precio}" min="0" step="1" onchange="updatePrecio('${p.id}',this.value)"></td><td class="num">${fmt(gan)}</td><td><span class="pill ${mcls}">${mar}%</span></td></tr>`;}).join('');
 };
 
 window.updatePrecio=async(id,val)=>{setSync('loading');const p=products.find(x=>x.id===id);if(p){p.precio=parseFloat(val)||0;await setDoc(doc(db,COL_PROD,id),p);setSync('ok');toast('Precio actualizado');}};
@@ -1357,52 +1430,55 @@ window.generarCotizacionPDF=async(id)=>{
   // Encabezado tabla
   doc.setFillColor(232,41,58);
   doc.rect(M,y,W-M*2,7,'F');
-  doc.setTextColor(255,255,255);doc.setFontSize(9);doc.setFont('helvetica','bold');
-  doc.text('Foto',M+2,y+5);
-  doc.text('Producto / Especificaciones',M+18,y+5);
-  doc.text('SKU',M+105,y+5);
-  doc.text('Cant.',M+125,y+5,{align:'right'});
-  doc.text('P.Unit.',M+148,y+5,{align:'right'});
-  doc.text('Subtotal',W-M-2,y+5,{align:'right'});
+  doc.setTextColor(255,255,255);doc.setFontSize(8.5);doc.setFont('helvetica','bold');
+  const C={foto:M+1,prod:M+16,sku:M+100,cant:M+120,punit:M+143,sub:W-M-2};
+  doc.text('Foto',C.foto,y+5);
+  doc.text('Producto / Especificaciones',C.prod,y+5);
+  doc.text('SKU',C.sku,y+5);
+  doc.text('Cant.',C.cant,y+5,{align:'right'});
+  doc.text('P.Unit.',C.punit,y+5,{align:'right'});
+  doc.text('Subtotal',C.sub,y+5,{align:'right'});
   y+=10;
 
   let total=0;
   (ped.items||[]).forEach((item,i)=>{
     const prod=products.find(x=>x.id===item.prodId);
     const specs=prod?.notas||'';
-    const rowH=specs?16:12;
+    const rowH=specs?18:13;
     if(i%2===0){doc.setFillColor(248,249,250);doc.rect(M,y-4,W-M*2,rowH+2,'F');}
-    doc.setTextColor(30,30,30);doc.setFont('helvetica','normal');doc.setFontSize(9);
 
     // Imagen
     if(imgCache[item.prodId]){
-      try{doc.addImage(imgCache[item.prodId],'JPEG',M+1,y-3,10,10);}catch(e){}
+      try{doc.addImage(imgCache[item.prodId],'JPEG',C.foto,y-2,11,11);}catch(e){}
     } else {
-      doc.setFillColor(240,241,242);doc.rect(M+1,y-3,10,10,'F');
-      doc.setFontSize(6);doc.setTextColor(150,150,150);doc.text('IMG',M+2.5,y+4);
-      doc.setFontSize(9);doc.setTextColor(30,30,30);
+      doc.setFillColor(235,236,237);doc.rect(C.foto,y-2,11,11,'F');
+      doc.setFontSize(5.5);doc.setTextColor(160,160,160);doc.text('IMG',C.foto+1.5,y+5);
     }
 
-    // Nombre
-    const nombre=item.nombre.length>28?item.nombre.slice(0,26)+'...':item.nombre;
-    doc.setFont('helvetica','bold');doc.setFontSize(9);
-    doc.text(nombre,M+18,y+1);
+    // Nombre en negrita
+    const nombre=item.nombre.length>30?item.nombre.slice(0,28)+'…':item.nombre;
+    doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(20,20,20);
+    doc.text(nombre,C.prod,y+2);
 
-    // Especificaciones en gris bajo el nombre
+    // Especificaciones en gris
     if(specs){
-      doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(120,120,120);
-      const specTxt=specs.length>40?specs.slice(0,38)+'...':specs;
-      doc.text(specTxt,M+18,y+6);
-      doc.setTextColor(30,30,30);
+      doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(130,130,130);
+      const specTxt=specs.length>42?specs.slice(0,40)+'…':specs;
+      doc.text(specTxt,C.prod,y+8);
     }
 
-    // SKU, cant, precio, subtotal
-    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(30,30,30);
-    doc.text(prod?.sku||item.sku||'',M+105,y+1);
-    doc.text(String(item.qty),M+125,y+1,{align:'right'});
-    doc.text(`$${item.precio.toLocaleString('es-MX')}`,M+148,y+1,{align:'right'});
+    // SKU — columna propia, sin solaparse
+    doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(80,80,80);
+    const skuTxt=(prod?.sku||item.sku||'').slice(0,10);
+    doc.text(skuTxt,C.sku,y+2);
+
+    // Cantidad, precio unit, subtotal
+    doc.setTextColor(20,20,20);doc.setFontSize(8.5);
+    doc.text(String(item.qty),C.cant,y+2,{align:'right'});
+    doc.text(`$${item.precio.toLocaleString('es-MX')}`,C.punit,y+2,{align:'right'});
     const sub=item.qty*item.precio;total+=sub;
-    doc.text(`$${sub.toLocaleString('es-MX')}`,W-M-2,y+1,{align:'right'});
+    doc.setFont('helvetica','bold');
+    doc.text(`$${sub.toLocaleString('es-MX')}`,C.sub,y+2,{align:'right'});
     y+=rowH+2;
   });
 
