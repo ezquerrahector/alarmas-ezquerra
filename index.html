@@ -228,8 +228,25 @@ tr:hover td{background:#fafafa}
 .install-banner{display:none;background:#111;color:#fff;padding:10px 14px;align-items:center;justify-content:space-between;gap:8px;font-size:12px}
 .install-banner.show{display:flex}
 .btn-install{padding:6px 12px;background:#E8293A;color:#fff;border:none;border-radius:6px;font-size:12px;font-family:inherit;cursor:pointer;font-weight:600;flex-shrink:0}
+/* DETALLE PRODUCTO */
+.detalle-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center}
+.detalle-overlay.open{display:flex}
+.detalle-modal{background:#fff;border-radius:16px;width:min(560px,96vw);max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.detalle-img{width:100%;height:240px;object-fit:contain;background:#f8f9fa;border-radius:16px 16px 0 0;border-bottom:1px solid #e5e7eb;padding:12px}
+.detalle-img-placeholder{width:100%;height:200px;background:#f4f5f7;border-radius:16px 16px 0 0;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:center;font-size:72px}
+.detalle-body{padding:18px 20px}
+.detalle-nombre{font-size:18px;font-weight:600;color:#1a1a2e;margin-bottom:4px;line-height:1.3}
+.detalle-sku{font-size:13px;color:#9ca3af;margin-bottom:14px}
+.detalle-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+@media(min-width:400px){.detalle-grid{grid-template-columns:repeat(3,1fr)}}
+.detalle-stat{background:#f8f9fa;border-radius:8px;padding:10px 12px}
+.detalle-stat-label{font-size:11px;color:#6b7280;margin-bottom:3px}
+.detalle-stat-val{font-size:16px;font-weight:600;color:#1a1a2e}
+.detalle-notas{background:#f8f9fa;border-radius:8px;padding:10px 12px;font-size:13px;color:#374151;line-height:1.5;margin-bottom:14px}
+.detalle-footer{display:flex;gap:8px;justify-content:flex-end;border-top:1px solid #f3f4f6;padding-top:14px;margin-top:4px}
+.prod-name-link{cursor:pointer;color:#1a1a2e}
+.prod-name-link:hover{color:#E8293A;text-decoration:underline}
 </style>
-</head>
 <body>
 
 <div class="loading-screen" id="loading">
@@ -465,6 +482,28 @@ tr:hover td{background:#fafafa}
     </div>
   </div>
 </div>
+<!-- MODAL DETALLE PRODUCTO -->
+<div class="detalle-overlay" id="modal-detalle" onclick="handleOverlayClick(event,'modal-detalle')">
+  <div class="detalle-modal">
+    <div id="detalle-img-container"></div>
+    <div class="detalle-body">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px">
+        <div style="flex:1;min-width:0">
+          <div class="detalle-nombre" id="detalle-nombre"></div>
+          <div class="detalle-sku" id="detalle-sku"></div>
+        </div>
+        <span id="detalle-status" class="pill"></span>
+      </div>
+      <div class="detalle-grid" id="detalle-grid"></div>
+      <div id="detalle-notas-wrap"></div>
+      <div class="detalle-footer">
+        <button class="btn-cancel" onclick="closeModal('modal-detalle')" style="padding:8px 14px;background:transparent;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;cursor:pointer;color:#6b7280">Cerrar</button>
+        <button class="btn-primary" id="detalle-edit-btn">✏ Editar producto</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal" onclick="handleOverlayClick(event,'modal')">
   <div class="modal">
     <h3 id="modal-title">Agregar producto</h3>
@@ -950,7 +989,7 @@ window.renderInv=()=>{
         <div style="display:flex;gap:10px;align-items:flex-start;flex:1;min-width:0">
           ${imgHtml}
           <div style="flex:1;min-width:0">
-            <div class="prod-name">${p.nombre}</div>
+            <div class="prod-name prod-name-link" onclick="verDetalle('${p.id}')">${p.nombre}</div>
             <div class="prod-sku">${p.sku||''}${p.marca?` · <span style="font-size:10px;font-weight:600;padding:1px 6px;border-radius:8px;${marcaCls}">${p.marca}</span>`:''}</div>
           </div>
         </div>
@@ -977,7 +1016,7 @@ window.renderInv=()=>{
     const imgCell=p.imgUrl?`<img src="${p.imgUrl}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb">`:`<div style="width:36px;height:36px;background:#f4f5f7;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px">${CATS[p.cat]||'📦'}</div>`;
     return`<tr>
       <td style="padding:8px 12px">${imgCell}</td>
-      <td title="${p.nombre}">${p.nombre}</td>
+      <td title="${p.nombre}"><span class="prod-name-link" onclick="verDetalle('${p.id}')">${p.nombre}</span></td>
       <td>${p.cat}</td>
       <td><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px;${marcaCls}">${marcaTxt}</span></td>
       <td class="num">${p.stock}</td>
@@ -1064,6 +1103,33 @@ window.saveProduct=async()=>{
 };
 window.editProduct=id=>{const p=products.find(x=>x.id===id);if(p)openModal(p);};
 window.deleteProduct=async id=>{if(!confirm('¿Eliminar?'))return;setSync('loading');await deleteDoc(doc(db,COL_PROD,id));setSync('ok');toast('Eliminado');};
+
+window.verDetalle=id=>{
+  const p=products.find(x=>x.id===id);if(!p)return;
+  const st=getSt(p);
+  const marcaCls=p.marca==='Kerui'?'background:#dbeafe;color:#1e40af':p.marca==='Otro'?'background:#f3f4f6;color:#374151':'background:#fef3c7;color:#92400e';
+  // Imagen
+  document.getElementById('detalle-img-container').innerHTML=p.imgUrl
+    ?`<img src="${p.imgUrl}" alt="${p.nombre}" class="detalle-img">`
+    :`<div class="detalle-img-placeholder">${CATS[p.cat]||'📦'}</div>`;
+  // Info
+  document.getElementById('detalle-nombre').textContent=p.nombre;
+  document.getElementById('detalle-sku').innerHTML=`${p.sku||'Sin SKU'} · <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px;${marcaCls}">${p.marca||'Staniot'}</span> · ${p.cat}`;
+  document.getElementById('detalle-status').className=`pill ${st.cls}`;
+  document.getElementById('detalle-status').textContent=st.txt;
+  document.getElementById('detalle-grid').innerHTML=`
+    <div class="detalle-stat"><div class="detalle-stat-label">Stock actual</div><div class="detalle-stat-val">${p.stock} uds</div></div>
+    <div class="detalle-stat"><div class="detalle-stat-label">Stock mínimo</div><div class="detalle-stat-val" style="color:#9ca3af">${p.min} uds</div></div>
+    <div class="detalle-stat"><div class="detalle-stat-label">Costo</div><div class="detalle-stat-val">${fmt(p.costo)}</div></div>
+    <div class="detalle-stat"><div class="detalle-stat-label">Precio venta</div><div class="detalle-stat-val" style="color:#E8293A">${fmt(p.precio)}</div></div>
+    <div class="detalle-stat"><div class="detalle-stat-label">Ganancia</div><div class="detalle-stat-val" style="color:#16a34a">${fmt(p.precio-p.costo)}</div></div>
+    <div class="detalle-stat"><div class="detalle-stat-label">Margen</div><div class="detalle-stat-val" style="color:#16a34a">${p.costo>0?Math.round((p.precio-p.costo)/p.precio*100):0}%</div></div>
+  `;
+  document.getElementById('detalle-notas-wrap').innerHTML=p.notas
+    ?`<div class="detalle-notas"><span style="font-size:11px;font-weight:600;color:#6b7280;display:block;margin-bottom:4px">NOTAS</span>${p.notas}</div>`:'';
+  document.getElementById('detalle-edit-btn').onclick=()=>{closeModal('modal-detalle');editProduct(id);};
+  document.getElementById('modal-detalle').classList.add('open');
+};
 
 /* ===== CLOUDINARY IMÁGENES ===== */
 const CLOUD_NAME='dkfgutcq3';
