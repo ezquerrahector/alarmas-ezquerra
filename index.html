@@ -959,10 +959,13 @@ window.savePedido=async()=>{
   document.querySelectorAll('#items-container .item-row').forEach(row=>{
     const prodId=row.dataset.prodId;
     const nombre=row.dataset.prodNombre;
-    const inputs=row.querySelectorAll('input');
-    const qty=parseInt(inputs[0].value)||1;
-    const precio=parseFloat(inputs[1].value)||0;
-    if(prodId&&nombre)items.push({prodId,nombre,marca:prod?.marca||'',qty,precio});
+    const inputs=row.querySelectorAll('input[type="number"]');
+    const qty=parseInt(inputs[0]?.value)||1;
+    const precio=parseFloat(inputs[1]?.value)||0;
+    if(prodId&&nombre){
+      const prodObj=products.find(x=>x.id===prodId);
+      items.push({prodId,nombre,marca:prodObj?.marca||'',qty,precio});
+    }
   });
   if(!items.length){alert('Selecciona al menos un producto.');return;}
   setSync('loading');
