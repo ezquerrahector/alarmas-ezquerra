@@ -760,6 +760,7 @@ window.renderPedidos=()=>{
           ${nextS&&!isCancelado?`<button class="btn-status" style="font-weight:600;border-color:#d1d5db" onclick="avanzarStatus('${p.id}','${nextS}')">→ ${nextS}</button>`:''}
           ${!isCancelado&&p.status!=='Cobrado'?`<button class="btn-status" style="color:#991b1b;border-color:#fca5a5" onclick="cambiarStatus('${p.id}','Cancelado')">✕ Cancelar</button>`:''}
           ${isCancelado?`<button class="btn-status" onclick="cambiarStatus('${p.id}','Pendiente')">↩ Reactivar</button>`:''}
+          <button class="btn-status" style="background:#E8293A;color:#fff;border-color:#E8293A;font-weight:600" onclick="generarCotizacionPDF('${p.id}')">📄 PDF</button>
           <button class="btn-wa" onclick="abrirWA('${p.id}')">💬 WA</button>
           <button class="btn-icon" onclick="editPedido('${p.id}')">✏</button>
           <button class="btn-del" onclick="deletePedido('${p.id}')">✕</button>
@@ -893,7 +894,18 @@ window.addItemRow=existing=>{
     dropdown.innerHTML=matches.map((p,i)=>{
       const stockCls=p.stock===0?'color:#991b1b':p.stock<=p.min?'color:#92400e':'color:#166534';
       const stockTxt=p.stock===0?'Sin stock':`${p.stock} uds`;
-      return`<div class="ac-option" data-id="${p.id}" data-nombre="${p.nombre}" data-precio="${p.precio}" style="${p.stock===0?'opacity:.6':''}"><span>${p.nombre}</span><span style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><span class="ac-option-price">${fmt(p.precio)}</span><span style="font-size:10px;font-weight:600;${stockCls}">${stockTxt}</span></span></div>`;
+      const imgHtml=p.imgUrl?`<img src="${p.imgUrl}" style="width:36px;height:36px;object-fit:cover;border-radius:6px;flex-shrink:0">`:`<div style="width:36px;height:36px;background:#f4f5f7;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${CATS[p.cat]||'📦'}</div>`;
+      return`<div class="ac-option" data-id="${p.id}" data-nombre="${p.nombre}" data-precio="${p.precio}" style="${p.stock===0?'opacity:.6':''}; display:flex; align-items:center; gap:8px; padding:8px 11px">
+        ${imgHtml}
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;color:#1a1a2e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nombre}</div>
+          <div style="font-size:11px;color:#6b7280">${p.sku||''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;flex-shrink:0">
+          <span class="ac-option-price">${fmt(p.precio)}</span>
+          <span style="font-size:10px;font-weight:600;${stockCls}">${stockTxt}</span>
+        </div>
+      </div>`;
     }).join('');
     dropdown.classList.add('open');
     dropdown.querySelectorAll('.ac-option').forEach(opt=>{
@@ -1024,6 +1036,7 @@ window.renderInv=()=>{
       <div class="prod-card-bottom">
         <span class="prod-cat">${p.cat}</span>
         <div class="prod-actions">
+          <button class="btn-icon" style="color:#2E6DA4;border-color:#2E6DA4" onclick="pedirProducto('${p.id}')">🛒</button>
           <button class="btn-icon" onclick="editProduct('${p.id}')">✏</button>
           <button class="btn-icon" onclick="deleteProduct('${p.id}')">✕</button>
         </div>
@@ -1047,6 +1060,7 @@ window.renderInv=()=>{
       <td class="num">${fmt(p.precio)}</td>
       <td><span class="pill ${st.cls}">${st.txt}</span></td>
       <td style="display:flex;gap:5px">
+        <button class="btn-icon" style="color:#2E6DA4;border-color:#bfdbfe;font-size:12px" onclick="pedirProducto('${p.id}')">🛒 Pedir</button>
         <button class="btn-icon" onclick="editProduct('${p.id}')">✏</button>
         <button class="btn-icon" onclick="deleteProduct('${p.id}')">✕</button>
       </td>
@@ -1157,7 +1171,153 @@ window.verDetalle=id=>{
   document.getElementById('modal-detalle').classList.add('open');
 };
 
-/* ===== CLOUDINARY IMÁGENES ===== */
+/* ===== PEDIR DESDE INVENTARIO ===== */
+window.pedirProducto=id=>{
+  const p=products.find(x=>x.id===id);if(!p)return;
+  // Navegar a pedidos y abrir modal con producto precargado
+  showView('pedidos',document.querySelectorAll('.tab')[1]);
+  setTimeout(()=>{
+    openPedidoModal();
+    setTimeout(()=>{
+      addItemRow({prodId:p.id,nombre:p.nombre,qty:1,precio:p.precio,marca:p.marca});
+      // Activar el input del autocomplete con el nombre
+      const rows=document.querySelectorAll('#items-container .item-row');
+      if(rows.length){
+        const lastRow=rows[rows.length-1];
+        lastRow.dataset.prodId=p.id;
+        lastRow.dataset.prodNombre=p.nombre;
+        const acInput=lastRow.querySelector('.ac-input');
+        if(acInput){acInput.value=p.nombre;acInput.classList.add('selected');}
+        const inputs=lastRow.querySelectorAll('input[type="number"]');
+        if(inputs[1])inputs[1].value=p.precio;
+        updateTotalPreview();
+        if(p.recordatorio){
+          const alerta=document.createElement('div');
+          alerta.style.cssText='background:#fef3c7;border:1px solid #fcd34d;border-radius:7px;padding:7px 10px;font-size:12px;color:#78350f;margin-top:4px';
+          alerta.innerHTML=`⚠ <strong>Recordatorio:</strong> ${p.recordatorio}`;
+          lastRow.insertAdjacentElement('afterend',alerta);
+        }
+      }
+    },100);
+  },100);
+};
+
+/* ===== COTIZACIÓN PDF ===== */
+window.generarCotizacionPDF=async(id)=>{
+  const ped=pedidos.find(x=>x.id===id);if(!ped)return;
+  const {jsPDF}=window.jspdf||{};
+  if(!jsPDF){
+    // Cargar jsPDF dinámicamente
+    await new Promise(res=>{
+      const s=document.createElement('script');
+      s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      s.onload=res;document.head.appendChild(s);
+    });
+  }
+  const {jsPDF:PDF}=window.jspdf;
+  const doc=new PDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const W=210,M=18;
+  let y=M;
+
+  // Encabezado negro
+  doc.setFillColor(0,0,0);
+  doc.rect(0,0,W,28,'F');
+  doc.setFillColor(232,41,58);
+  doc.rect(0,26,W,2,'F');
+
+  // Logo text
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(16);doc.setFont('helvetica','bold');
+  doc.text('ALARMAS',M,12);
+  doc.setTextColor(46,109,164);
+  doc.text('ezquerra',M+33,12);
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(8);doc.setFont('helvetica','normal');
+  doc.text('Sistema de seguridad profesional',M,18);
+
+  // Cotización / número
+  doc.setFontSize(20);doc.setFont('helvetica','bold');
+  doc.setTextColor(255,255,255);
+  doc.text('COTIZACIÓN',W-M,10,{align:'right'});
+  doc.setFontSize(10);doc.setFont('helvetica','normal');
+  doc.text(`#${ped.num||id.slice(-4).toUpperCase()}`,W-M,17,{align:'right'});
+  const fecha=ped.fecha?.toDate?ped.fecha.toDate():new Date(ped.fecha||Date.now());
+  doc.text(fecha.toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'}),W-M,22,{align:'right'});
+
+  y=38;
+  // Datos cliente
+  doc.setTextColor(30,30,30);
+  doc.setFontSize(9);doc.setFont('helvetica','bold');
+  doc.text('DATOS DEL CLIENTE',M,y);
+  y+=5;
+  doc.setFont('helvetica','normal');doc.setFontSize(10);
+  doc.setTextColor(30,30,30);
+  doc.text(ped.cliente,M,y);y+=5;
+  if(ped.tel){doc.setFontSize(9);doc.setTextColor(100,100,100);doc.text(`Tel: ${ped.tel}`,M,y);y+=4;}
+  if(ped.dir){doc.setFontSize(9);doc.setTextColor(100,100,100);doc.text(`Dir: ${ped.dir}`,M,y);y+=4;}
+
+  // Estatus
+  doc.setFontSize(9);doc.setFont('helvetica','bold');
+  doc.setTextColor(232,41,58);
+  doc.text(`Estatus: ${ped.status}`,W-M,38,{align:'right'});
+
+  y+=8;
+  // Tabla de productos
+  doc.setFillColor(232,41,58);
+  doc.rect(M,y,W-M*2,7,'F');
+  doc.setTextColor(255,255,255);doc.setFontSize(9);doc.setFont('helvetica','bold');
+  doc.text('Producto',M+2,y+5);
+  doc.text('SKU',M+90,y+5);
+  doc.text('Cant.',M+115,y+5,{align:'right'});
+  doc.text('Precio unit.',M+140,y+5,{align:'right'});
+  doc.text('Subtotal',W-M-2,y+5,{align:'right'});
+  y+=10;
+
+  let total=0;
+  (ped.items||[]).forEach((item,i)=>{
+    if(i%2===0){doc.setFillColor(248,249,250);doc.rect(M,y-4,W-M*2,8,'F');}
+    doc.setTextColor(30,30,30);doc.setFont('helvetica','normal');doc.setFontSize(9);
+    const prod=products.find(x=>x.id===item.prodId);
+    const nombre=item.nombre.length>38?item.nombre.slice(0,36)+'...':item.nombre;
+    doc.text(nombre,M+2,y);
+    doc.text(prod?.sku||'',M+90,y);
+    doc.text(String(item.qty),M+115,y,{align:'right'});
+    doc.text(`$${item.precio.toLocaleString('es-MX')}`,M+140,y,{align:'right'});
+    const sub=item.qty*item.precio;total+=sub;
+    doc.text(`$${sub.toLocaleString('es-MX')}`,W-M-2,y,{align:'right'});
+    y+=8;
+  });
+
+  // Total
+  y+=2;
+  doc.setDrawColor(232,41,58);doc.setLineWidth(0.5);
+  doc.line(M,y,W-M,y);y+=6;
+  doc.setFont('helvetica','bold');doc.setFontSize(12);
+  doc.setTextColor(30,30,30);
+  doc.text('TOTAL:',W-M-40,y);
+  doc.setTextColor(232,41,58);
+  doc.text(`$${total.toLocaleString('es-MX')}`,W-M-2,y,{align:'right'});
+  y+=10;
+
+  // Notas
+  if(ped.notas){
+    doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(100,100,100);
+    doc.text('NOTAS:',M,y);y+=4;
+    doc.setFont('helvetica','normal');doc.setTextColor(60,60,60);
+    const notasLines=doc.splitTextToSize(ped.notas,W-M*2);
+    doc.text(notasLines,M,y);y+=notasLines.length*4+4;
+  }
+
+  // Pie de página
+  doc.setFontSize(8);doc.setTextColor(150,150,150);doc.setFont('helvetica','normal');
+  doc.text('Esta cotización tiene validez de 15 días a partir de la fecha de emisión.',M,285);
+  doc.text('Alarmas Ezquerra  •  WhatsApp: 477 700 0872',W/2,290,{align:'center'});
+
+  // Guardar y compartir
+  const filename=`cotizacion_${ped.cliente.replace(/\s/g,'_')}_#${ped.num||''}.pdf`;
+  doc.save(filename);
+  toast('PDF descargado');
+};
 const CLOUD_NAME='dkfgutcq3';
 const UPLOAD_PRESET='alarmas_ezquerra';
 let currentImgUrl='';
