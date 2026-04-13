@@ -304,13 +304,13 @@ tr:hover td{background:#fafafa}
   </div>
   <div class="prod-list" id="prod-list"></div>
   <div class="table-wrap"><table><thead><tr>
-    <th style="width:5%"></th>
-    <th style="width:8%">SKU</th>
-    <th style="width:19%">Producto</th><th style="width:11%">Categoría</th>
+    <th style="width:4%"></th>
+    <th style="width:7%">SKU</th>
+    <th style="width:20%">Producto</th><th style="width:10%">Categoría</th>
     <th style="width:8%">Marca</th>
-    <th class="num" style="width:7%">Stock</th><th class="num" style="width:5%">Mín.</th>
+    <th class="num" style="width:6%">Stock</th><th class="num" style="width:5%">Mín.</th>
     <th class="num" style="width:9%">Costo</th><th class="num" style="width:9%">Precio</th>
-    <th style="width:8%">Estado</th><th style="width:11%"></th>
+    <th style="width:8%">Estado</th><th style="width:14%"></th>
   </tr></thead><tbody id="inv-body"></tbody></table></div>
 </div>
 
@@ -508,9 +508,9 @@ tr:hover td{background:#fafafa}
 <div class="modal-overlay" id="modal" onclick="handleOverlayClick(event,'modal')">
   <div class="modal">
     <h3 id="modal-title">Agregar producto</h3>
-    <div class="field"><label>Nombre *</label><input id="f-nombre" type="text" placeholder="Ej: Sensor de movimiento PR200"></div>
-    <div class="field"><label>Categoría</label>
-      <input id="f-cat" list="cat-list" placeholder="Buscar categoría..." style="width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;font-family:inherit;background:#fff;color:#1a1a2e;outline:none">
+    <div class="field"><label>Nombre *</label><input id="f-nombre" type="text" placeholder="Ej: Sensor de movimiento PR200" required></div>
+    <div class="field"><label>Categoría *</label>
+      <input id="f-cat" list="cat-list" placeholder="Selecciona una categoría..." style="width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;font-family:inherit;background:#fff;color:#1a1a2e;outline:none" required>
       <datalist id="cat-list">
         <option>Accesorios</option>
         <option>Cámaras NVR</option>
@@ -524,23 +524,24 @@ tr:hover td{background:#fafafa}
         <option>Sensores perimetrales</option>
       </datalist>
     </div>
-    <div class="field"><label>Proveedor / Marca</label><select id="f-marca">
+    <div class="field"><label>Proveedor / Marca *</label><select id="f-marca">
+      <option value="">— Selecciona —</option>
       <option value="Staniot">Staniot</option>
       <option value="Kerui">Kerui</option>
       <option value="Otro">Otro</option>
     </select></div>
     <div class="two-col">
-      <div class="field"><label>Stock actual</label><input id="f-stock" type="number" min="0" value="0"></div>
-      <div class="field"><label>Stock mínimo</label><input id="f-min" type="number" min="0" value="3"></div>
+      <div class="field"><label>Stock actual *</label><input id="f-stock" type="number" min="0" placeholder="0"></div>
+      <div class="field"><label>Stock mínimo *</label><input id="f-min" type="number" min="1" placeholder="1"></div>
     </div>
     <div class="two-col">
-      <div class="field"><label>Costo MXN</label><input id="f-costo" type="number" min="0" step="0.01" placeholder="0.00"></div>
-      <div class="field"><label>Precio venta MXN</label><input id="f-precio" type="number" min="0" step="0.01" placeholder="0.00"></div>
+      <div class="field"><label>Costo MXN *</label><input id="f-costo" type="number" min="0" step="0.01" placeholder="0.00"></div>
+      <div class="field"><label>Precio venta MXN *</label><input id="f-precio" type="number" min="0" step="0.01" placeholder="0.00"></div>
     </div>
-    <div class="field"><label>Modelo / SKU</label><input id="f-sku" type="text" placeholder="Ej: PR200"></div>
-    <div class="field"><label>Notas</label><textarea id="f-notas" placeholder="Especificaciones, proveedor, etc."></textarea></div>
+    <div class="field"><label>Modelo / SKU *</label><input id="f-sku" type="text" placeholder="Ej: PR200"></div>
+    <div class="field"><label>Notas <span style="font-size:11px;color:#9ca3af">(opcional)</span></label><textarea id="f-notas" placeholder="Especificaciones, proveedor, etc."></textarea></div>
     <div class="field">
-      <label>⚠ Recordatorio al vender (accesorios requeridos)</label>
+      <label>⚠ Recordatorio al vender <span style="font-size:11px;color:#9ca3af">(opcional)</span></label>
       <input id="f-recordatorio" type="text" placeholder="Ej: 3 pilas AAA, poner etiqueta al sensor">
       <p style="font-size:11px;color:#9ca3af;margin-top:4px">Aparecerá como alerta al agregar este producto a un pedido.</p>
     </div>
@@ -1059,10 +1060,10 @@ window.renderInv=()=>{
       <td class="num">${fmt(p.costo)}</td>
       <td class="num">${fmt(p.precio)}</td>
       <td><span class="pill ${st.cls}">${st.txt}</span></td>
-      <td style="display:flex;gap:5px">
-        <button class="btn-icon" style="color:#2E6DA4;border-color:#bfdbfe;font-size:12px" onclick="pedirProducto('${p.id}')">🛒 Pedir</button>
-        <button class="btn-icon" onclick="editProduct('${p.id}')">✏</button>
-        <button class="btn-icon" onclick="deleteProduct('${p.id}')">✕</button>
+      <td style="display:flex;gap:4px;flex-wrap:nowrap">
+        <button class="btn-icon" style="color:#2E6DA4;border-color:#bfdbfe;font-size:11px;padding:4px 7px" onclick="pedirProducto('${p.id}')">🛒</button>
+        <button class="btn-icon" style="font-size:11px;padding:4px 7px" onclick="editProduct('${p.id}')">✏</button>
+        <button class="btn-icon" style="font-size:11px;padding:4px 7px" onclick="deleteProduct('${p.id}')">✕</button>
       </td>
     </tr>`;
   }).join('');
@@ -1095,10 +1096,10 @@ window.openModal=p=>{
   currentImgUrl=p?.imgUrl||'';
   document.getElementById('modal-title').textContent=p?'Editar producto':'Agregar producto';
   document.getElementById('f-nombre').value=p?p.nombre:'';
-  document.getElementById('f-cat').value=p?p.cat:'Sensores de movimiento';
-  document.getElementById('f-marca').value=p?p.marca||'Staniot':'Staniot';
-  document.getElementById('f-stock').value=p?p.stock:0;
-  document.getElementById('f-min').value=p?p.min:3;
+  document.getElementById('f-cat').value=p?p.cat:'';
+  document.getElementById('f-marca').value=p?p.marca||'':'';
+  document.getElementById('f-stock').value=p?p.stock:'';
+  document.getElementById('f-min').value=p?p.min:'';
   document.getElementById('f-costo').value=p?p.costo:'';
   document.getElementById('f-precio').value=p?p.precio:'';
   document.getElementById('f-sku').value=p?p.sku:'';
@@ -1121,16 +1122,34 @@ window.handleOverlayClick=(e,id)=>{if(e.target===document.getElementById(id))clo
 
 window.saveProduct=async()=>{
   const nombre=document.getElementById('f-nombre').value.trim();
-  if(!nombre){alert('Ingresa el nombre.');return;}
+  const cat=document.getElementById('f-cat').value.trim();
+  const marca=document.getElementById('f-marca').value;
+  const sku=document.getElementById('f-sku').value.trim();
+  const stock=document.getElementById('f-stock').value;
+  const min=document.getElementById('f-min').value;
+  const costo=document.getElementById('f-costo').value;
+  const precio=document.getElementById('f-precio').value;
+  const errores=[];
+  if(!nombre) errores.push('Nombre');
+  if(!cat) errores.push('Categoría');
+  if(!marca) errores.push('Proveedor / Marca');
+  if(stock==='') errores.push('Stock actual');
+  if(!min||parseInt(min)<1) errores.push('Stock mínimo (mínimo 1)');
+  if(!costo||parseFloat(costo)<=0) errores.push('Costo MXN');
+  if(!precio||parseFloat(precio)<=0) errores.push('Precio venta MXN');
+  if(!sku) errores.push('Modelo / SKU');
+  if(errores.length){
+    alert('Faltan campos obligatorios:\n• '+errores.join('\n• '));
+    return;
+  }
   setSync('loading');
   const obj={
-    nombre,cat:document.getElementById('f-cat').value,
-    marca:document.getElementById('f-marca').value,
-    stock:parseInt(document.getElementById('f-stock').value)||0,
-    min:parseInt(document.getElementById('f-min').value)||1,
-    costo:parseFloat(document.getElementById('f-costo').value)||0,
-    precio:parseFloat(document.getElementById('f-precio').value)||0,
-    sku:document.getElementById('f-sku').value.trim(),
+    nombre,cat,marca,
+    stock:parseInt(stock)||0,
+    min:parseInt(min)||1,
+    costo:parseFloat(costo)||0,
+    precio:parseFloat(precio)||0,
+    sku,
     notas:document.getElementById('f-notas').value.trim(),
     recordatorio:document.getElementById('f-recordatorio').value.trim(),
     imgUrl:currentImgUrl||''
