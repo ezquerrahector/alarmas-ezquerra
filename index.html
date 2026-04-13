@@ -539,7 +539,7 @@ tr:hover td{background:#fafafa}
       <div class="field"><label>Precio venta MXN *</label><input id="f-precio" type="number" min="0" step="0.01" placeholder="0.00"></div>
     </div>
     <div class="field"><label>Modelo / SKU *</label><input id="f-sku" type="text" placeholder="Ej: PR200"></div>
-    <div class="field"><label>Notas <span style="font-size:11px;color:#9ca3af">(opcional)</span></label><textarea id="f-notas" placeholder="Especificaciones, proveedor, etc."></textarea></div>
+    <div class="field"><label>Especificaciones <span style="font-size:11px;color:#9ca3af">(opcional)</span></label><textarea id="f-notas" placeholder="Especificaciones técnicas, características, etc."></textarea></div>
     <div class="field">
       <label>⚠ Recordatorio al vender <span style="font-size:11px;color:#9ca3af">(opcional)</span></label>
       <input id="f-recordatorio" type="text" placeholder="Ej: 3 pilas AAA, poner etiqueta al sensor">
@@ -578,7 +578,42 @@ tr:hover td{background:#fafafa}
       <h4>Productos del pedido</h4>
       <div id="items-container"></div>
       <button class="add-item-btn" onclick="addItemRow()">+ Agregar producto</button>
-      <div class="total-preview"><span>Total estimado:</span><span id="total-preview">$0</span></div>
+
+      <!-- DESCUENTOS -->
+      <div style="margin-top:12px;background:#f8f9fa;border-radius:8px;padding:10px 12px;border:1px solid #e5e7eb">
+        <div style="font-size:12px;font-weight:600;color:#1a1a2e;margin-bottom:8px">Descuentos</div>
+        <!-- Por producto -->
+        <div style="font-size:11px;color:#6b7280;margin-bottom:6px;font-weight:500">Por producto (edita el precio directo arriba) ↑</div>
+        <!-- Por pedido -->
+        <div style="font-size:11px;color:#6b7280;margin-bottom:6px;font-weight:500">Por pedido completo:</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div>
+            <label style="font-size:11px;color:#6b7280;display:block;margin-bottom:3px">Descuento %</label>
+            <input id="desc-pct" type="number" min="0" max="100" step="0.5" placeholder="0" style="width:100%;padding:7px 9px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;font-family:inherit;background:#fff;color:#1a1a2e;outline:none" oninput="updateTotalPreview()">
+          </div>
+          <div>
+            <label style="font-size:11px;color:#6b7280;display:block;margin-bottom:3px">Descuento $ fijo</label>
+            <input id="desc-monto" type="number" min="0" step="1" placeholder="0" style="width:100%;padding:7px 9px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;font-family:inherit;background:#fff;color:#1a1a2e;outline:none" oninput="updateTotalPreview()">
+          </div>
+        </div>
+        <div style="font-size:10px;color:#9ca3af;margin-top:5px">Si ingresas ambos, primero se aplica el % y luego el monto fijo.</div>
+      </div>
+
+      <!-- RESUMEN TOTAL -->
+      <div style="margin-top:8px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:#6b7280;margin-bottom:4px">
+          <span>Subtotal</span><span id="subtotal-preview">$0</span>
+        </div>
+        <div id="desc-pct-row" style="display:none;justify-content:space-between;font-size:13px;color:#E8293A;margin-bottom:4px">
+          <span id="desc-pct-label">Descuento (0%)</span><span id="desc-pct-val">-$0</span>
+        </div>
+        <div id="desc-monto-row" style="display:none;justify-content:space-between;font-size:13px;color:#E8293A;margin-bottom:4px">
+          <span>Descuento fijo</span><span id="desc-monto-val">-$0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:600;color:#1a1a2e;border-top:1px solid #e5e7eb;padding-top:6px;margin-top:2px">
+          <span>Total a cobrar</span><span id="total-preview" style="color:#E8293A">$0</span>
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal('modal-pedido')">Cancelar</button>
@@ -753,7 +788,15 @@ window.renderPedidos=()=>{
         </div>
         <span class="pill ${STATUS_CLS[p.status]||'s-pendiente'}">${p.status}</span>
       </div>
-      ${p.items?.length?`<div class="pedido-items">${p.items.map(i=>{const prod=products.find(x=>x.id===i.prodId);const marca=prod?.marca||i.marca||'';const marcaCls=marca==='Kerui'?'color:#1e40af':marca==='Otro'?'color:#6b7280':'color:#92400e';return`<div class="pedido-item-row"><span>${i.nombre} ×${i.qty}${marca?` <span style="font-size:10px;font-weight:600;${marcaCls}">(${marca})</span>`:''}</span><span>${fmt(i.precio*i.qty)}</span></div>`;}).join('')}<div class="pedido-total" style="margin-top:6px;text-align:right">Total: ${fmt(tot)}</div></div>`:''}
+      ${p.items?.length?`<div class="pedido-items">
+        ${p.items.map(i=>{const prod=products.find(x=>x.id===i.prodId);const marca=prod?.marca||i.marca||'';const marcaCls=marca==='Kerui'?'color:#1e40af':marca==='Otro'?'color:#6b7280':'color:#92400e';return`<div class="pedido-item-row"><span>${i.nombre} ×${i.qty}${marca?` <span style="font-size:10px;font-weight:600;${marcaCls}">(${marca})</span>`:''}</span><span>${fmt(i.precio*i.qty)}</span></div>`;}).join('')}
+        ${(p.descPct>0||p.descMonto>0)?`
+          <div class="pedido-item-row" style="color:#9ca3af;font-size:11px"><span>Subtotal</span><span>${fmt(p.subtotal||tot)}</span></div>
+          ${p.descPct>0?`<div class="pedido-item-row" style="color:#E8293A"><span>Descuento (${p.descPct}%)</span><span>-${fmt((p.subtotal||tot)*(p.descPct/100))}</span></div>`:''}
+          ${p.descMonto>0?`<div class="pedido-item-row" style="color:#E8293A"><span>Descuento fijo</span><span>-${fmt(p.descMonto)}</span></div>`:''}
+        `:''}
+        <div class="pedido-total" style="margin-top:6px;text-align:right;color:#E8293A">Total: ${fmt(p.totalFinal??tot)}</div>
+      </div>`:''}
       ${p.notas?`<div style="font-size:12px;color:#6b7280;margin-top:6px;padding:6px 8px;background:#f8f9fa;border-radius:6px">${p.notas}</div>`:''}
       <div class="pedido-footer">
         <div class="pedido-actions">
@@ -822,6 +865,8 @@ window.openPedidoModal=p=>{
   document.getElementById('p-tel').value=p?p.tel:'';
   document.getElementById('p-dir').value=p?p.dir:'';
   document.getElementById('p-notas').value=p?p.notas:'';
+  document.getElementById('desc-pct').value=p?.descPct||'';
+  document.getElementById('desc-monto').value=p?.descMonto||'';
   document.getElementById('items-container').innerHTML='';
   itemCounter=0;
   if(p?.items?.length){p.items.forEach(i=>addItemRow(i));}else{addItemRow();}
@@ -955,14 +1000,27 @@ window.addItemRow=existing=>{
 };
 
 window.updateTotalPreview=()=>{
-  let tot=0;
+  let subtotal=0;
   document.querySelectorAll('#items-container .item-row').forEach(row=>{
     const inputs=row.querySelectorAll('input[type="number"]');
     const qty=parseInt(inputs[0]?.value)||0;
     const precio=parseFloat(inputs[1]?.value)||0;
-    tot+=qty*precio;
+    subtotal+=qty*precio;
   });
-  document.getElementById('total-preview').textContent=fmt(tot);
+  const pct=parseFloat(document.getElementById('desc-pct')?.value)||0;
+  const monto=parseFloat(document.getElementById('desc-monto')?.value)||0;
+  const descPct=subtotal*(pct/100);
+  const despuesPct=subtotal-descPct;
+  const descMonto=Math.min(monto,despuesPct);
+  const total=despuesPct-descMonto;
+
+  const el=id=>document.getElementById(id);
+  if(el('subtotal-preview'))el('subtotal-preview').textContent=fmt(subtotal);
+
+  const rowPct=el('desc-pct-row'),rowMonto=el('desc-monto-row');
+  if(rowPct){rowPct.style.display=pct>0?'flex':'none';if(pct>0){el('desc-pct-label').textContent=`Descuento (${pct}%)`;el('desc-pct-val').textContent=`-${fmt(descPct)}`;}}
+  if(rowMonto){rowMonto.style.display=monto>0?'flex':'none';if(monto>0)el('desc-monto-val').textContent=`-${fmt(descMonto)}`;}
+  if(el('total-preview'))el('total-preview').textContent=fmt(total);
 };
 
 window.savePedido=async()=>{
@@ -982,11 +1040,17 @@ window.savePedido=async()=>{
   });
   if(!items.length){alert('Selecciona al menos un producto.');return;}
   setSync('loading');
+  const subtotal=items.reduce((a,i)=>a+i.qty*i.precio,0);
+  const descPct=parseFloat(document.getElementById('desc-pct').value)||0;
+  const descMonto=parseFloat(document.getElementById('desc-monto').value)||0;
+  const descPctVal=subtotal*(descPct/100);
+  const totalFinal=Math.max(0,(subtotal-descPctVal)-Math.min(descMonto,subtotal-descPctVal));
   const obj={
     cliente,tel:document.getElementById('p-tel').value.trim(),
     dir:document.getElementById('p-dir').value.trim(),
     notas:document.getElementById('p-notas').value.trim(),
-    items,status:editPedidoId?(pedidos.find(x=>x.id===editPedidoId)?.status||'Pendiente'):'Pendiente',
+    items,descPct,descMonto,subtotal,totalFinal,
+    status:editPedidoId?(pedidos.find(x=>x.id===editPedidoId)?.status||'Pendiente'):'Pendiente',
     fecha:editPedidoId?(pedidos.find(x=>x.id===editPedidoId)?.fecha||new Date()):new Date(),
   };
   if(editPedidoId){
@@ -1183,7 +1247,7 @@ window.verDetalle=id=>{
     <div class="detalle-stat"><div class="detalle-stat-label">Margen</div><div class="detalle-stat-val" style="color:#16a34a">${p.costo>0?Math.round((p.precio-p.costo)/p.precio*100):0}%</div></div>
   `;
   document.getElementById('detalle-notas-wrap').innerHTML=`
-    ${p.notas?`<div class="detalle-notas"><span style="font-size:11px;font-weight:600;color:#6b7280;display:block;margin-bottom:4px">NOTAS</span>${p.notas}</div>`:''}
+    ${p.notas?`<div class="detalle-notas"><span style="font-size:11px;font-weight:600;color:#6b7280;display:block;margin-bottom:4px">ESPECIFICACIONES</span>${p.notas}</div>`:''}
     ${p.recordatorio?`<div class="detalle-notas" style="background:#fef3c7;border:1px solid #fcd34d"><span style="font-size:11px;font-weight:600;color:#92400e;display:block;margin-bottom:4px">⚠ RECORDATORIO AL VENDER</span><span style="color:#78350f">${p.recordatorio}</span></div>`:''}
   `;
   document.getElementById('detalle-edit-btn').onclick=()=>{closeModal('modal-detalle');editProduct(id);};
@@ -1295,48 +1359,91 @@ window.generarCotizacionPDF=async(id)=>{
   doc.rect(M,y,W-M*2,7,'F');
   doc.setTextColor(255,255,255);doc.setFontSize(9);doc.setFont('helvetica','bold');
   doc.text('Foto',M+2,y+5);
-  doc.text('Producto',M+18,y+5);
-  doc.text('SKU',M+88,y+5);
-  doc.text('Cant.',M+110,y+5,{align:'right'});
-  doc.text('Precio unit.',M+138,y+5,{align:'right'});
+  doc.text('Producto / Especificaciones',M+18,y+5);
+  doc.text('SKU',M+105,y+5);
+  doc.text('Cant.',M+125,y+5,{align:'right'});
+  doc.text('P.Unit.',M+148,y+5,{align:'right'});
   doc.text('Subtotal',W-M-2,y+5,{align:'right'});
   y+=10;
 
   let total=0;
   (ped.items||[]).forEach((item,i)=>{
-    const rowH=14;
-    if(i%2===0){doc.setFillColor(248,249,250);doc.rect(M,y-4,W-M*2,rowH,'F');}
-    doc.setTextColor(30,30,30);doc.setFont('helvetica','normal');doc.setFontSize(9);
     const prod=products.find(x=>x.id===item.prodId);
+    const specs=prod?.notas||'';
+    const rowH=specs?16:12;
+    if(i%2===0){doc.setFillColor(248,249,250);doc.rect(M,y-4,W-M*2,rowH+2,'F');}
+    doc.setTextColor(30,30,30);doc.setFont('helvetica','normal');doc.setFontSize(9);
 
-    // Imagen del producto
+    // Imagen
     if(imgCache[item.prodId]){
       try{doc.addImage(imgCache[item.prodId],'JPEG',M+1,y-3,10,10);}catch(e){}
     } else {
       doc.setFillColor(240,241,242);doc.rect(M+1,y-3,10,10,'F');
-      doc.setFontSize(6);doc.setTextColor(150,150,150);doc.text('IMG',M+2,y+4);
+      doc.setFontSize(6);doc.setTextColor(150,150,150);doc.text('IMG',M+2.5,y+4);
       doc.setFontSize(9);doc.setTextColor(30,30,30);
     }
 
-    const nombre=item.nombre.length>32?item.nombre.slice(0,30)+'...':item.nombre;
-    doc.text(nombre,M+18,y+2);
-    doc.text(prod?.sku||item.sku||'',M+88,y+2);
-    doc.text(String(item.qty),M+110,y+2,{align:'right'});
-    doc.text(`$${item.precio.toLocaleString('es-MX')}`,M+138,y+2,{align:'right'});
+    // Nombre
+    const nombre=item.nombre.length>28?item.nombre.slice(0,26)+'...':item.nombre;
+    doc.setFont('helvetica','bold');doc.setFontSize(9);
+    doc.text(nombre,M+18,y+1);
+
+    // Especificaciones en gris bajo el nombre
+    if(specs){
+      doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(120,120,120);
+      const specTxt=specs.length>40?specs.slice(0,38)+'...':specs;
+      doc.text(specTxt,M+18,y+6);
+      doc.setTextColor(30,30,30);
+    }
+
+    // SKU, cant, precio, subtotal
+    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(30,30,30);
+    doc.text(prod?.sku||item.sku||'',M+105,y+1);
+    doc.text(String(item.qty),M+125,y+1,{align:'right'});
+    doc.text(`$${item.precio.toLocaleString('es-MX')}`,M+148,y+1,{align:'right'});
     const sub=item.qty*item.precio;total+=sub;
-    doc.text(`$${sub.toLocaleString('es-MX')}`,W-M-2,y+2,{align:'right'});
-    y+=rowH;
+    doc.text(`$${sub.toLocaleString('es-MX')}`,W-M-2,y+1,{align:'right'});
+    y+=rowH+2;
   });
 
-  // Total
+  // Total y descuentos
   y+=2;
   doc.setDrawColor(232,41,58);doc.setLineWidth(0.5);
   doc.line(M,y,W-M,y);y+=6;
+
+  const subtotalPed=ped.subtotal||(ped.items||[]).reduce((a,i)=>a+i.qty*i.precio,0);
+  const dPct=ped.descPct||0;
+  const dMonto=ped.descMonto||0;
+  const dPctVal=subtotalPed*(dPct/100);
+  const totalFinal=ped.totalFinal??subtotalPed;
+
+  if(dPct>0||dMonto>0){
+    doc.setFont('helvetica','normal');doc.setFontSize(10);
+    doc.setTextColor(100,100,100);
+    doc.text('Subtotal:',W-M-50,y);
+    doc.text(`$${subtotalPed.toLocaleString('es-MX')}`,W-M-2,y,{align:'right'});
+    y+=6;
+    if(dPct>0){
+      doc.setTextColor(232,41,58);
+      doc.text(`Descuento (${dPct}%):`,W-M-50,y);
+      doc.text(`-$${dPctVal.toLocaleString('es-MX')}`,W-M-2,y,{align:'right'});
+      y+=6;
+    }
+    if(dMonto>0){
+      doc.setTextColor(232,41,58);
+      doc.text('Descuento fijo:',W-M-50,y);
+      doc.text(`-$${dMonto.toLocaleString('es-MX')}`,W-M-2,y,{align:'right'});
+      y+=6;
+    }
+    doc.setDrawColor(220,220,220);doc.setLineWidth(0.3);
+    doc.line(W-M-70,y,W-M,y);y+=5;
+  }
+
   doc.setFont('helvetica','bold');doc.setFontSize(12);
   doc.setTextColor(30,30,30);
-  doc.text('TOTAL:',W-M-40,y);
+  doc.text('TOTAL A COBRAR:',W-M-60,y);
   doc.setTextColor(232,41,58);
-  doc.text(`$${total.toLocaleString('es-MX')}`,W-M-2,y,{align:'right'});
+  doc.text(`$${totalFinal.toLocaleString('es-MX')}`,W-M-2,y,{align:'right'});
   y+=10;
 
   // Notas
