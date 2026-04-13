@@ -305,11 +305,12 @@ tr:hover td{background:#fafafa}
   <div class="prod-list" id="prod-list"></div>
   <div class="table-wrap"><table><thead><tr>
     <th style="width:5%"></th>
-    <th style="width:22%">Producto</th><th style="width:11%">Categoría</th>
-    <th style="width:9%">Marca</th>
-    <th class="num" style="width:7%">Stock</th><th class="num" style="width:6%">Mín.</th>
+    <th style="width:8%">SKU</th>
+    <th style="width:19%">Producto</th><th style="width:11%">Categoría</th>
+    <th style="width:8%">Marca</th>
+    <th class="num" style="width:7%">Stock</th><th class="num" style="width:5%">Mín.</th>
     <th class="num" style="width:9%">Costo</th><th class="num" style="width:9%">Precio</th>
-    <th style="width:9%">Estado</th><th style="width:13%"></th>
+    <th style="width:8%">Estado</th><th style="width:11%"></th>
   </tr></thead><tbody id="inv-body"></tbody></table></div>
 </div>
 
@@ -538,6 +539,11 @@ tr:hover td{background:#fafafa}
     </div>
     <div class="field"><label>Modelo / SKU</label><input id="f-sku" type="text" placeholder="Ej: PR200"></div>
     <div class="field"><label>Notas</label><textarea id="f-notas" placeholder="Especificaciones, proveedor, etc."></textarea></div>
+    <div class="field">
+      <label>⚠ Recordatorio al vender (accesorios requeridos)</label>
+      <input id="f-recordatorio" type="text" placeholder="Ej: 3 pilas AAA, poner etiqueta al sensor">
+      <p style="font-size:11px;color:#9ca3af;margin-top:4px">Aparecerá como alerta al agregar este producto a un pedido.</p>
+    </div>
     <div class="field">
       <label>Foto del producto</label>
       <div id="img-preview-wrap" style="margin-bottom:8px;display:none">
@@ -917,6 +923,18 @@ window.addItemRow=existing=>{
     dropdown.classList.remove('open');
     if(!precioInput.value||precioInput.value==='0')precioInput.value=precio;
     updateTotalPreview();
+    // Mostrar recordatorio si el producto lo tiene
+    const prod=products.find(x=>x.id===id);
+    if(prod?.recordatorio){
+      // Remover recordatorio anterior si existe
+      const prevAlert=row.parentElement?.querySelector(`.recordatorio-${idx}`);
+      if(prevAlert)prevAlert.remove();
+      const alerta=document.createElement('div');
+      alerta.className=`recordatorio-${idx}`;
+      alerta.style.cssText='background:#fef3c7;border:1px solid #fcd34d;border-radius:7px;padding:7px 10px;font-size:12px;color:#78350f;margin-top:4px;grid-column:1/-1';
+      alerta.innerHTML=`⚠ <strong>Recordatorio:</strong> ${prod.recordatorio}`;
+      row.insertAdjacentElement('afterend',alerta);
+    }
     qtyInput.focus();
   }
 
@@ -1016,6 +1034,7 @@ window.renderInv=()=>{
     const imgCell=p.imgUrl?`<img src="${p.imgUrl}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb">`:`<div style="width:36px;height:36px;background:#f4f5f7;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px">${CATS[p.cat]||'📦'}</div>`;
     return`<tr>
       <td style="padding:8px 12px">${imgCell}</td>
+      <td style="font-size:11px;color:#6b7280;font-weight:600">${p.sku||'—'}</td>
       <td title="${p.nombre}"><span class="prod-name-link" onclick="verDetalle('${p.id}')">${p.nombre}</span></td>
       <td>${p.cat}</td>
       <td><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px;${marcaCls}">${marcaTxt}</span></td>
@@ -1067,6 +1086,7 @@ window.openModal=p=>{
   document.getElementById('f-precio').value=p?p.precio:'';
   document.getElementById('f-sku').value=p?p.sku:'';
   document.getElementById('f-notas').value=p?p.notas:'';
+  document.getElementById('f-recordatorio').value=p?p.recordatorio||'':'';
   document.getElementById('img-upload-status').textContent='';
   document.getElementById('f-img-file').value='';
   if(p?.imgUrl){
@@ -1095,6 +1115,7 @@ window.saveProduct=async()=>{
     precio:parseFloat(document.getElementById('f-precio').value)||0,
     sku:document.getElementById('f-sku').value.trim(),
     notas:document.getElementById('f-notas').value.trim(),
+    recordatorio:document.getElementById('f-recordatorio').value.trim(),
     imgUrl:currentImgUrl||''
   };
   if(editId){await setDoc(doc(db,COL_PROD,editId),obj);toast('Producto actualizado');}
@@ -1125,8 +1146,10 @@ window.verDetalle=id=>{
     <div class="detalle-stat"><div class="detalle-stat-label">Ganancia</div><div class="detalle-stat-val" style="color:#16a34a">${fmt(p.precio-p.costo)}</div></div>
     <div class="detalle-stat"><div class="detalle-stat-label">Margen</div><div class="detalle-stat-val" style="color:#16a34a">${p.costo>0?Math.round((p.precio-p.costo)/p.precio*100):0}%</div></div>
   `;
-  document.getElementById('detalle-notas-wrap').innerHTML=p.notas
-    ?`<div class="detalle-notas"><span style="font-size:11px;font-weight:600;color:#6b7280;display:block;margin-bottom:4px">NOTAS</span>${p.notas}</div>`:'';
+  document.getElementById('detalle-notas-wrap').innerHTML=`
+    ${p.notas?`<div class="detalle-notas"><span style="font-size:11px;font-weight:600;color:#6b7280;display:block;margin-bottom:4px">NOTAS</span>${p.notas}</div>`:''}
+    ${p.recordatorio?`<div class="detalle-notas" style="background:#fef3c7;border:1px solid #fcd34d"><span style="font-size:11px;font-weight:600;color:#92400e;display:block;margin-bottom:4px">⚠ RECORDATORIO AL VENDER</span><span style="color:#78350f">${p.recordatorio}</span></div>`:''}
+  `;
   document.getElementById('detalle-edit-btn').onclick=()=>{closeModal('modal-detalle');editProduct(id);};
   document.getElementById('modal-detalle').classList.add('open');
 };
