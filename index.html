@@ -469,12 +469,21 @@ tr:hover td{background:#fafafa}
   <div class="modal">
     <h3 id="modal-title">Agregar producto</h3>
     <div class="field"><label>Nombre *</label><input id="f-nombre" type="text" placeholder="Ej: Sensor de movimiento PR200"></div>
-    <div class="field"><label>Categoría</label><select id="f-cat">
-      <option>Sensores de movimiento</option><option>Panel de control</option>
-      <option>Sensores de puerta</option><option>Controles remotos</option>
-      <option>Sensores de vibración</option><option>Sensores de humo</option>
-      <option>Sensores perimetrales</option><option>Cámaras NVR</option><option>Accesorios</option>
-    </select></div>
+    <div class="field"><label>Categoría</label>
+      <input id="f-cat" list="cat-list" placeholder="Buscar categoría..." style="width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;font-family:inherit;background:#fff;color:#1a1a2e;outline:none">
+      <datalist id="cat-list">
+        <option>Accesorios</option>
+        <option>Cámaras NVR</option>
+        <option>Controles remotos</option>
+        <option>Panel de control</option>
+        <option>Sensores de humo</option>
+        <option>Sensores de movimiento</option>
+        <option>Sensores de negocio</option>
+        <option>Sensores de puerta</option>
+        <option>Sensores de vibración</option>
+        <option>Sensores perimetrales</option>
+      </datalist>
+    </div>
     <div class="field"><label>Proveedor / Marca</label><select id="f-marca">
       <option value="Staniot">Staniot</option>
       <option value="Kerui">Kerui</option>
@@ -572,7 +581,7 @@ const INITIAL_PROD=[
   {nombre:'Alarma Kerui G70 Kit',cat:'Panel de control',stock:3,min:2,costo:1530,precio:2800,sku:'G70-KIT',notas:'Kit completo'},
 ];
 
-const CATS={'Sensores de movimiento':'📡','Panel de control':'🖥️','Sensores de puerta':'🚪','Controles remotos':'🎮','Sensores de vibración':'📳','Sensores de humo':'🔥','Sensores perimetrales':'🔭','Cámaras NVR':'📷','Accesorios':'🔧'};
+const CATS={'Sensores de movimiento':'📡','Panel de control':'🖥️','Sensores de puerta':'🚪','Controles remotos':'🎮','Sensores de vibración':'📳','Sensores de humo':'🔥','Sensores perimetrales':'🔭','Sensores de negocio':'🏪','Cámaras NVR':'📷','Accesorios':'🔧'};
 const STATUSES=['Pendiente','Cotizado','Confirmado','Instalado','Cobrado','Cancelado'];
 const STATUS_NEXT={'Pendiente':'Cotizado','Cotizado':'Confirmado','Confirmado':'Instalado','Instalado':'Cobrado'};
 const STATUS_PREV={'Cotizado':'Pendiente','Confirmado':'Cotizado','Instalado':'Confirmado','Cobrado':'Instalado'};
