@@ -1,4 +1,4 @@
-const CACHE = "alarmeg-identidad-v3-2026-11-05";
+const CACHE = "alarmeg-identidad-v4-correcta-2026-11-05";
 const STATIC = ["./", "./index.html", "./manifest.json", "./favicon.svg", "./assets/alarmeg-isotipo.svg", "./assets/alarmeg-logo-claro.svg", "./assets/alarmeg-logo-oscuro.svg"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(STATIC)));self.skipWaiting();});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim();});

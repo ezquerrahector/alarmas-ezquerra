@@ -1,6 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 170 170"><rect x="0" y="0" width="170" height="170" rx="28" fill="#102A43"/><g transform="translate(25 8)"><g transform="translate(5,5)">
- <path d="M9 25 L27 18 L27 2 L44 2 L44 14 L60 6 L76 14 L76 2 L93 2 L93 18 L111 25 L111 63 L60 41 L9 63 Z" fill="#FFFFFF"/>
- <path d="M9 76 L50 59 L60 47 L70 59 L111 76 L111 97 L101 118 L82 91 L72 82 L60 64 L48 82 L38 91 L19 118 L9 97 Z" fill="#FFFFFF"/>
- <path d="M60 76 L76 104 L44 104 Z" fill="#102A43"/>
- <path d="M43 114 L77 114 L96 130 L60 151 L24 130 Z" fill="#00A6A6"/>
- </g></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 700" width="700" height="700" role="img" aria-label="ALARMEG"><rect width="700" height="700" rx="100" fill="#102A43"/><path fill="#FFFFFF" fill-rule="evenodd" d="M137,162 137,317 139,319 147,318 239,283 352,237 553,318 560,319 563,316 562,159 477,124 474,126 474,191 471,193 401,162 400,95 397,93 305,94 304,162 232,193 229,191 229,125 227,124 141,157Z"/><path fill="#102A43" fill-rule="evenodd" d="M272,271 281,273 295,293 316,285 318,287 189,499 229,536 275,487 429,487 474,536 512,499 384,286 392,287 449,309 462,291 473,288 353,239ZM294,456 352,363 410,455 409,458 295,458Z"/><path fill="#00A6A6" d="M230,537 352,626 473,537 429,489 275,489Z"/></svg>
