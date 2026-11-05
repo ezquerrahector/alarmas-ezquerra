@@ -1192,7 +1192,9 @@ window.savePedido=async()=>{
   };
   try{
   if(editPedidoId){
-    await setDoc(doc(db,COL_PED,editPedidoId),{...obj,updatedAt:new Date()});
+    const previous=pedidos.find(p=>p.id===editPedidoId)||{};
+    if(['Confirmado','Instalado','Cobrado'].includes(previous.status)&&JSON.stringify(previous.items)!==JSON.stringify(obj.items)){alert('No se puede cambiar la lista de productos de un pedido confirmado o instalado sin ajustar inventario.');setSync('ok');return;}
+    await setDoc(doc(db,COL_PED,editPedidoId),{...previous,...obj,id:previous.id||editPedidoId,updatedAt:new Date()});
     toast('Pedido actualizado');
     notificarPedido('✏ Pedido actualizado',obj);
   } else {
@@ -2176,18 +2178,19 @@ window.descargarPlantillaInventario=()=>{
 
 window.importarPedidosCSV=async file=>{
   if(!file.files[0])return;
-  const text=await file.files[0].text();
-  const rows=parseCsv(text.replace(/^\ufeff/,'')).slice(1);
-  let count=0;
-  for(const row of rows){
-    const[num,cliente,tel,dir,status,fecha,notas]=row.map(s=>s.trim());
-    if(!cliente)continue;
-    await addDoc(collection(db,COL_PED),{num:parseInt(num)||pedidos.length+1,cliente,tel:tel||'',dir:dir||'',status:status||'Pendiente',fecha:fecha?new Date(fecha):new Date(),notas:notas||'',items:[]});
-    count++;
-  }
-  toast(`${count} pedidos importados`);file.value='';
+  try{
+    const rows=parseCsv((await file.files[0].text()).replace(/^\ufeff/,''));
+    const h=rows.shift().map(s=>s.trim().toLowerCase());
+    const val=(row,...names)=>{const n=names.map(x=>h.indexOf(x)).find(x=>x>=0);return n==null?'':(row[n]||'').trim();};
+    let count=0;
+    for(const row of rows){
+      const cliente=val(row,'cliente');if(!cliente)continue;
+      const fecha=val(row,'fecha','fecha pedido'),instalacion=val(row,'fecha_instalacion','fecha instalación');
+      await addDoc(collection(db,COL_PED),{num:Number(val(row,'num'))||Math.max(0,...pedidos.map(p=>Number(p.num)||0))+count+1,cliente,tel:val(row,'telefono','teléfono'),dir:val(row,'direccion','dirección'),status:val(row,'status','estatus')||'Pendiente',fecha:fecha?new Date(fecha+'T12:00:00'):new Date(),fechaInstalacion:instalacion||null,notas:val(row,'notas'),items:[],createdAt:new Date(),updatedAt:new Date()});count++;
+    }
+    toast(count+' pedidos importados sin productos');
+  }catch(e){console.error(e);alert('Error al importar pedidos: '+e.message);}finally{file.value='';}
 };
-
 window.importarInventarioCSV=async file=>{
   if(!file.files[0])return;
   const text=await file.files[0].text();
